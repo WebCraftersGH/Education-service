@@ -14,7 +14,7 @@ func main() {
 	var db *gorm.DB
 
 	problemRepo := repo.NewRepository(db)
-	problemContentRepo := repo.NewRepository(db)
+	problemContentRepo := repo.NewRepositoryProblemContent(db)
 
 	problemUC := uc.NewProblemUseCase(problemRepo)
 	problemContentUC := uc.NewProblemContentUseCase(problemContentRepo)

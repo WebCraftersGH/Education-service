@@ -31,6 +31,10 @@ func (r *Repository) Create(ctx context.Context, p domain.Problem) (domain.Probl
 	return ToProblemDomain(model), nil
 }
 
+func (r *Repository) ReadBySlug(ctx context.Context, pSlug string) (domain.Problem, error) {
+	return domain.Problem{}, nil
+}
+
 func (r *Repository) Read(ctx context.Context, problemID uuid.UUID) (domain.Problem, error) {
 	var model Problem
 
@@ -79,6 +83,10 @@ func (r *Repository) Update(ctx context.Context, p domain.Problem) (domain.Probl
 	}
 
 	return ToProblemDomain(updated), nil
+}
+
+func (r *Repository) DeleteBySlug(ctx context.Context, pSlug string) error {
+	return nil
 }
 
 func (r *Repository) Delete(ctx context.Context, problemID uuid.UUID) error {

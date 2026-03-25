@@ -28,3 +28,11 @@ type ProblemRepository interface {
 	DeleteBySlug(ctx context.Context, pSlug string) error
 	List(ctx context.Context, filter domain.ProblemFilter) ([]domain.Problem, error)
 }
+
+type ProblemContentRepository interface {
+	Create(ctx context.Context, pc domain.ProblemContent) (domain.ProblemContent, error)
+	ReadByProblemID(ctx context.Context, problemID uuid.UUID) (domain.ProblemContent, error)
+	Update(ctx context.Context, pc domain.ProblemContent) (domain.ProblemContent, error)
+	DeleteByProblemID(ctx context.Context, problemID uuid.UUID) error
+}
+
