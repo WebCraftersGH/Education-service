@@ -1,0 +1,572 @@
+openapi: 3.0.3
+info:
+  title: Education Service API
+  version: 1.0.0
+  description: |
+    OpenAPI documentation for the current problem catalog endpoints in Education Service.
+    The specification reflects the handlers that already exist in the project.
+servers:
+  - url: http://localhost:8080
+    description: Local server
+
+tags:
+  - name: Problems
+    description: CRUD operations for problems
+  - name: Problem Content
+    description: CRUD operations for problem markdown content
+
+paths:
+  /problems/:
+    post:
+      tags: [Problems]
+      summary: Create problem
+      operationId: createProblem
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateProblemRequest'
+            example:
+              name: Two Sum
+              slug: two-sum
+              difficulty: easy
+              tag: arrays
+              author_id: 11111111-1111-1111-1111-111111111111
+      responses:
+        '201':
+          description: Problem created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '400':
+          description: Invalid request or validation/database error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                invalidBody:
+                  value:
+                    error: invalid request body
+                validationError:
+                  value:
+                    error: problem name is required
+    get:
+      tags: [Problems]
+      summary: List problems
+      operationId: listProblems
+      parameters:
+        - name: tag
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Filter by tag
+          example: arrays
+        - name: difficulty
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Filter by difficulty
+          example: easy
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            default: 20
+          description: Number of items to return
+        - name: offset
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+          description: Number of items to skip
+      responses:
+        '200':
+          description: Problems list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Problem'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /problems/{slug}:
+    get:
+      tags: [Problems]
+      summary: Get problem by slug
+      operationId: getProblemBySlug
+      parameters:
+        - $ref: '#/components/parameters/ProblemSlug'
+      responses:
+        '200':
+          description: Problem found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '404':
+          description: Problem not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: problem not found
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    put:
+      tags: [Problems]
+      summary: Update problem by slug
+      operationId: updateProblemBySlug
+      parameters:
+        - $ref: '#/components/parameters/ProblemSlug'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateProblemRequest'
+            example:
+              name: Two Sum Updated
+              slug: two-sum
+              difficulty: medium
+              tag: arrays
+              author_id: 11111111-1111-1111-1111-111111111111
+      responses:
+        '200':
+          description: Problem updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '400':
+          description: Invalid request or validation/database error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Problem not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: problem not found
+        '500':
+          description: Internal server error while reading current problem
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    delete:
+      tags: [Problems]
+      summary: Delete problem by slug
+      operationId: deleteProblemBySlug
+      parameters:
+        - $ref: '#/components/parameters/ProblemSlug'
+      responses:
+        '204':
+          description: Problem deleted
+        '404':
+          description: Problem not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: problem not found
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /problems/{problemID}/content:
+    post:
+      tags: [Problem Content]
+      summary: Create content for problem
+      operationId: createProblemContent
+      parameters:
+        - $ref: '#/components/parameters/ProblemID'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateProblemContentRequest'
+            example:
+              description_md: |
+                ## Task
+                Find two numbers that sum to target.
+              input_format_md: |
+                The first line contains n.
+              output_format_md: |
+                Print two indexes.
+              constraints_md: |
+                - 1 <= n <= 10^5
+              notes_md: |
+                Use a hash map.
+      responses:
+        '201':
+          description: Problem content created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemContent'
+        '400':
+          description: Invalid request, invalid problem id, or validation/database error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                invalidProblemID:
+                  value:
+                    error: invalid problem id
+                validationError:
+                  value:
+                    error: problem description is required
+    get:
+      tags: [Problem Content]
+      summary: Get content by problem id
+      operationId: getProblemContentByProblemID
+      parameters:
+        - $ref: '#/components/parameters/ProblemID'
+      responses:
+        '200':
+          description: Problem content found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemContent'
+        '400':
+          description: Invalid problem id
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: invalid problem id
+        '404':
+          description: Problem content not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: problem content not found
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    put:
+      tags: [Problem Content]
+      summary: Update content by problem id
+      operationId: updateProblemContentByProblemID
+      parameters:
+        - $ref: '#/components/parameters/ProblemID'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateProblemContentRequest'
+            example:
+              description_md: |
+                ## Updated task
+                Find two numbers that sum to target.
+              input_format_md: |
+                The first line contains n.
+              output_format_md: |
+                Print two indexes.
+              constraints_md: |
+                - 1 <= n <= 10^5
+              notes_md: |
+                Hash map solution is expected.
+      responses:
+        '200':
+          description: Problem content updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemContent'
+        '400':
+          description: Invalid request, invalid problem id, or validation/database error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Problem content not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: problem content not found
+        '500':
+          description: Internal server error while reading current content
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    delete:
+      tags: [Problem Content]
+      summary: Delete content by problem id
+      operationId: deleteProblemContentByProblemID
+      parameters:
+        - $ref: '#/components/parameters/ProblemID'
+      responses:
+        '204':
+          description: Problem content deleted
+        '400':
+          description: Invalid problem id
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: invalid problem id
+        '404':
+          description: Problem content not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: problem content not found
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  parameters:
+    ProblemSlug:
+      name: slug
+      in: path
+      required: true
+      description: Unique problem slug
+      schema:
+        type: string
+      example: two-sum
+    ProblemID:
+      name: problemID
+      in: path
+      required: true
+      description: Problem UUID
+      schema:
+        type: string
+        format: uuid
+      example: 22222222-2222-2222-2222-222222222222
+
+  schemas:
+    ErrorResponse:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: string
+          example: invalid request body
+
+    CreateProblemRequest:
+      type: object
+      required: [name, slug, difficulty, author_id]
+      properties:
+        name:
+          type: string
+          example: Two Sum
+        slug:
+          type: string
+          example: two-sum
+        difficulty:
+          type: string
+          example: easy
+        tag:
+          type: string
+          example: arrays
+        author_id:
+          type: string
+          format: uuid
+          example: 11111111-1111-1111-1111-111111111111
+
+    UpdateProblemRequest:
+      type: object
+      required: [name, slug, difficulty, author_id]
+      properties:
+        name:
+          type: string
+          example: Two Sum Updated
+        slug:
+          type: string
+          example: two-sum
+        difficulty:
+          type: string
+          example: medium
+        tag:
+          type: string
+          example: arrays
+        author_id:
+          type: string
+          format: uuid
+          example: 11111111-1111-1111-1111-111111111111
+
+    Problem:
+      type: object
+      required:
+        - id
+        - name
+        - slug
+        - difficulty
+        - tag
+        - status
+        - author_id
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: 22222222-2222-2222-2222-222222222222
+        name:
+          type: string
+          example: Two Sum
+        slug:
+          type: string
+          example: two-sum
+        difficulty:
+          type: string
+          example: easy
+        tag:
+          type: string
+          example: arrays
+        status:
+          type: string
+          enum: [draft, approved, rejected]
+          example: draft
+        author_id:
+          type: string
+          format: uuid
+          example: 11111111-1111-1111-1111-111111111111
+        verified_at:
+          type: string
+          format: date-time
+          nullable: true
+          example: null
+        created_at:
+          type: string
+          format: date-time
+          example: 2026-03-25T12:00:00Z
+        updated_at:
+          type: string
+          format: date-time
+          example: 2026-03-25T12:00:00Z
+
+    CreateProblemContentRequest:
+      type: object
+      required: [description_md]
+      properties:
+        description_md:
+          type: string
+          example: "## Task\nSolve the problem."
+        input_format_md:
+          type: string
+          example: "Input description"
+        output_format_md:
+          type: string
+          example: "Output description"
+        constraints_md:
+          type: string
+          example: "- 1 <= n <= 10^5"
+        notes_md:
+          type: string
+          example: "Additional notes"
+
+    UpdateProblemContentRequest:
+      type: object
+      required: [description_md]
+      properties:
+        description_md:
+          type: string
+          example: "## Task\nUpdated problem statement."
+        input_format_md:
+          type: string
+          example: "Input description"
+        output_format_md:
+          type: string
+          example: "Output description"
+        constraints_md:
+          type: string
+          example: "- 1 <= n <= 10^5"
+        notes_md:
+          type: string
+          example: "Additional notes"
+
+    ProblemContent:
+      type: object
+      required:
+        - id
+        - problem_id
+        - description_md
+        - input_format_md
+        - output_format_md
+        - constraints_md
+        - notes_md
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: 33333333-3333-3333-3333-333333333333
+        problem_id:
+          type: string
+          format: uuid
+          example: 22222222-2222-2222-2222-222222222222
+        description_md:
+          type: string
+          example: "## Task\nSolve the problem."
+        input_format_md:
+          type: string
+          example: "Input description"
+        output_format_md:
+          type: string
+          example: "Output description"
+        constraints_md:
+          type: string
+          example: "- 1 <= n <= 10^5"
+        notes_md:
+          type: string
+          example: "Additional notes"
+        created_at:
+          type: string
+          format: date-time
+          example: 2026-03-25T12:00:00Z
+        updated_at:
+          type: string
+          format: date-time
+          example: 2026-03-25T12:00:00Z
