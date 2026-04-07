@@ -15,7 +15,7 @@ type Config struct {
 	DBHost     string
 	DBPort     string
 	DBUser     string
-	DBPassword string
+	DBPass string
 	DBName     string
 	DBSSLMode  string
 	DBTimeZone string
@@ -33,7 +33,7 @@ func Load(envPath string) (Config, error) {
 		DBHost:     getEnv("DB_HOST", "localhost"),
 		DBPort:     getEnv("DB_PORT", "5432"),
 		DBUser:     getEnv("DB_USER", "postgres"),
-		DBPassword: os.Getenv("DB_PASSWORD"),
+		DBPass: os.Getenv("DB_PASS"),
 		DBName:     getEnv("DB_NAME", "education_service"),
 		DBSSLMode:  getEnv("DB_SSLMODE", "disable"),
 		DBTimeZone: getEnv("DB_TIMEZONE", "UTC"),
@@ -88,7 +88,7 @@ func (c Config) DSN() string {
 		c.DBHost,
 		c.DBPort,
 		c.DBUser,
-		c.DBPassword,
+		c.DBPass,
 		c.DBName,
 		c.DBSSLMode,
 		c.DBTimeZone,
