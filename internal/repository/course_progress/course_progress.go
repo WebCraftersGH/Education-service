@@ -1,6 +1,8 @@
 package courseprogress
 
 import (
+	"fmt"
+	"errors"
 	"context"
 
 	"github.com/WebCraftersGH/Education-service/internal/domain"
@@ -23,7 +25,10 @@ func (r *progressRepo) CreateCheckPoint(
 
 	cp := toGormModel(checkPoint)
 	if err := r.db.WithContext(ctx).Create(&cp).Error; err != nil {
-		return domain.CheckPoint{}, nil //TODO ошибка создания
+		if errors.Is(err, gorm.ErrDuplicateKey) {
+			return domain.CheckPoint{}, fmt.Errorf("gormrepo: create checkpoint: %w", ErrDuplicateRecord)
+		}
+		return domain.CheckPoint{}, fmt.Errorf("gormrepo: %v: %w", err, ErrInternal)
 	}
 
 	return toDomainModel(cp), nil
