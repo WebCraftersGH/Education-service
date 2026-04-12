@@ -2,7 +2,6 @@ package main
 
 import (
 	"net/http"
-	"os"
 
 	"github.com/WebCraftersGH/Education-service/internal/config"
 	controller "github.com/WebCraftersGH/Education-service/internal/controller/problem_catalog"
@@ -15,16 +14,17 @@ import (
 )
 
 func main() {
-	logging.Init(os.Getenv("LOG_LEVEL"))
-	logger := logging.GetLogger()
-
 	cfg, err := config.Load(".env")
 	if err != nil {
-		logger.WithError(err).Fatal("load config")
+		panic(err)
 	}
 
-	logging.Init(cfg.LogLevel)
-	logger = logging.GetLogger()
+	logger, closer, err := logging.New(cfg.LogLevel)
+	if err != nil {
+		panic(err)
+	}
+	defer closer.Close()
+
 	logger.WithFields(map[string]any{
 		"app_env":   cfg.AppEnv,
 		"http_port": cfg.HTTPPort,
@@ -38,16 +38,22 @@ func main() {
 		logger.WithError(err).Fatal("init database")
 	}
 
-	problemRepo := repo.NewRepository(db)
-	problemContentRepo := repo.NewRepositoryProblemContent(db)
+	problemRepo := repo.NewRepository(db, logger)
+	problemContentRepo := repo.NewRepositoryProblemContent(db, logger)
 
 	problemUC := uc.NewProblemUseCase(problemRepo)
 	problemContentUC := uc.NewProblemContentUseCase(problemContentRepo)
 
-	problemCatalogCTRL := controller.NewProblemCatalogController(problemUC, problemContentUC)
+	problemCatalogCTRL := controller.NewProblemCatalogController(
+		problemUC,
+		problemContentUC,
+		logger,
+	)
 
 	r := chi.NewRouter()
-	r.Use(appmiddleware.RequestLogger)
+
+	r.Use(appmiddleware.GenerateRequestID)
+
 	problemCatalogCTRL.RegisterRoutes(r)
 
 	logger.WithField("address", cfg.HTTPAddress()).Info("http server started")

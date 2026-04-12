@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"path"
+	"path/filepath"
 	"runtime"
 	"strings"
 
@@ -12,71 +12,38 @@ import (
 )
 
 const (
-	LOGS_PATH     = "logs"
-	LOGS_FILENAME = "log"
+	LogsPath     = "logs"
+	LogsFilename = "log.log"
 )
 
-type writerHook struct {
-	Writer    []io.Writer
-	LogLevels []logrus.Level
-}
+type Logger = *logrus.Entry
 
-func (hook *writerHook) Fire(entry *logrus.Entry) error {
-	line, err := entry.String()
-	if err != nil {
-		return err
-	}
-
-	for _, w := range hook.Writer {
-		_, _ = w.Write([]byte(line))
-	}
-
-	return nil
-}
-
-func (hook *writerHook) Levels() []logrus.Level {
-	return hook.LogLevels
-}
-
-var e *logrus.Entry
-
-type Logger struct {
-	*logrus.Entry
-}
-
-func GetLogger() Logger {
-	return Logger{e}
-}
-
-func Init(level string) {
+func New(level string) (Logger, io.Closer, error) {
 	l := logrus.New()
 	l.SetReportCaller(true)
 	l.SetLevel(parseLevel(level))
-	l.Formatter = &logrus.TextFormatter{
-		CallerPrettyfier: func(f *runtime.Frame) (function string, file string) {
-			filename := path.Base(f.File)
-			return fmt.Sprintf("%s()", f.Function), fmt.Sprintf("%s:%d", filename, f.Line)
-		},
+	l.SetFormatter(&logrus.TextFormatter{
 		FullTimestamp: true,
-	}
-
-	if _, err := os.Stat(LOGS_PATH); os.IsNotExist(err) {
-		_ = os.MkdirAll(LOGS_PATH, 0755)
-	}
-
-	logFilename := path.Join(LOGS_PATH, LOGS_FILENAME+".log")
-	logFile, err := os.OpenFile(logFilename, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0640)
-	if err != nil {
-		panic(err)
-	}
-
-	l.SetOutput(io.Discard)
-	l.AddHook(&writerHook{
-		Writer:    []io.Writer{logFile, os.Stdout},
-		LogLevels: logrus.AllLevels,
+		CallerPrettyfier: func(f *runtime.Frame) (function string, file string) {
+			funcName := filepath.Base(f.Function)
+			fileName := filepath.Base(f.File)
+			return funcName + "()", fmt.Sprintf("%s:%d", fileName, f.Line)
+		},
 	})
 
-	e = logrus.NewEntry(l)
+	if err := os.MkdirAll(LogsPath, 0o755); err != nil {
+		return nil, nil, fmt.Errorf("create logs dir: %w", err)
+	}
+
+	logPath := filepath.Join(LogsPath, LogsFilename)
+	logFile, err := os.OpenFile(logPath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0o640)
+	if err != nil {
+		return nil, nil, fmt.Errorf("open log file: %w", err)
+	}
+
+	l.SetOutput(io.MultiWriter(os.Stdout, logFile))
+
+	return logrus.NewEntry(l), logFile, nil
 }
 
 func parseLevel(level string) logrus.Level {
