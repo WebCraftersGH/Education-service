@@ -14,29 +14,29 @@ import (
 
 type Repository struct {
 	db *gorm.DB
+	logger logging.Logger
 }
 
-func NewRepository(db *gorm.DB) contracts.ProblemRepository {
-	return &Repository{db: db}
+func NewRepository(db *gorm.DB, logger logging.Logger) contracts.ProblemRepository {
+	return &Repository{db: db, logger: logger}
 }
 
 func (r *Repository) Create(ctx context.Context, p domain.Problem) (domain.Problem, error) {
 	model := ToProblemModel(p)
-	logger := logging.GetLogger()
 
 	if model.ID == uuid.Nil {
 		model.ID = uuid.New()
 	}
 
 	if err := r.db.WithContext(ctx).Create(&model).Error; err != nil {
-		logger.WithError(err).WithFields(map[string]any{
+		r.logger.WithError(err).WithFields(map[string]any{
 			"slug": model.Slug,
 			"id":   model.ID,
 		}).Error("create problem failed")
 		return domain.Problem{}, err
 	}
 
-	logger.WithFields(map[string]any{
+	r.logger.WithFields(map[string]any{
 		"slug": model.Slug,
 		"id":   model.ID,
 	}).Info("problem created")
@@ -69,7 +69,6 @@ func (r *Repository) Read(ctx context.Context, problemID uuid.UUID) (domain.Prob
 }
 
 func (r *Repository) Update(ctx context.Context, p domain.Problem) (domain.Problem, error) {
-	logger := logging.GetLogger()
 
 	if p.ID == uuid.Nil {
 		return domain.Problem{}, errors.New("problem id is required")
@@ -91,7 +90,7 @@ func (r *Repository) Update(ctx context.Context, p domain.Problem) (domain.Probl
 		})
 
 	if tx.Error != nil {
-		logger.WithError(tx.Error).WithField("id", p.ID).Error("update problem failed")
+		r.logger.WithError(tx.Error).WithField("id", p.ID).Error("update problem failed")
 		return domain.Problem{}, tx.Error
 	}
 
@@ -103,11 +102,11 @@ func (r *Repository) Update(ctx context.Context, p domain.Problem) (domain.Probl
 	if err := r.db.WithContext(ctx).
 		Where("id = ?", p.ID).
 		First(&updated).Error; err != nil {
-		logger.WithError(err).WithField("id", p.ID).Error("read updated problem failed")
+		r.logger.WithError(err).WithField("id", p.ID).Error("read updated problem failed")
 		return domain.Problem{}, err
 	}
 
-	logger.WithFields(map[string]any{
+	r.logger.WithFields(map[string]any{
 		"id":   p.ID,
 		"slug": updated.Slug,
 	}).Info("problem updated")
@@ -116,13 +115,12 @@ func (r *Repository) Update(ctx context.Context, p domain.Problem) (domain.Probl
 }
 
 func (r *Repository) DeleteBySlug(ctx context.Context, pSlug string) error {
-	logger := logging.GetLogger()
 	tx := r.db.WithContext(ctx).
 		Where("slug = ?", strings.TrimSpace(strings.ToLower(pSlug))).
 		Delete(&Problem{})
 
 	if tx.Error != nil {
-		logger.WithError(tx.Error).WithField("slug", pSlug).Error("delete problem by slug failed")
+		r.logger.WithError(tx.Error).WithField("slug", pSlug).Error("delete problem by slug failed")
 		return tx.Error
 	}
 
@@ -130,7 +128,7 @@ func (r *Repository) DeleteBySlug(ctx context.Context, pSlug string) error {
 		return gorm.ErrRecordNotFound
 	}
 
-	logger.WithField("slug", pSlug).Info("problem deleted")
+	r.logger.WithField("slug", pSlug).Info("problem deleted")
 	return nil
 }
 

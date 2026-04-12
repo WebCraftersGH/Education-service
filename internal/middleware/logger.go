@@ -2,36 +2,22 @@ package middleware
 
 import (
 	"net/http"
-	"time"
+	"github.com/google/uuid"
+	"context"
 
-	"github.com/WebCraftersGH/Education-service/pgk/logging"
 )
 
-type statusRecorder struct {
-	http.ResponseWriter
-	status int
-}
+const requestIDKey = "request-id"
 
-func (r *statusRecorder) WriteHeader(status int) {
-	r.status = status
-	r.ResponseWriter.WriteHeader(status)
-}
-
-func RequestLogger(next http.Handler) http.Handler {
+//GenerateRequestID generate request id
+func GenerateRequestID (next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		logger := logging.GetLogger()
-		startedAt := time.Now()
-		recorder := &statusRecorder{ResponseWriter: w, status: http.StatusOK}
+		reqID := uuid.New().String()
+		ctx := context.WithValue(r.Context(), requestIDKey, reqID)	
+		
+		r = r.WithContext(ctx)
 
-		next.ServeHTTP(recorder, r)
-
-		logger.WithFields(map[string]any{
-			"method":      r.Method,
-			"path":        r.URL.Path,
-			"query":       r.URL.RawQuery,
-			"status":      recorder.status,
-			"remote_addr": r.RemoteAddr,
-			"duration":    time.Since(startedAt).String(),
-		}).Info("http request handled")
+		w.Header().Set("X-Request-ID", reqID)
+		next.ServeHTTP(w, r)	
 	})
 }
