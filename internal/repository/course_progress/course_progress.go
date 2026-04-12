@@ -25,7 +25,7 @@ func (r *progressRepo) CreateCheckPoint(
 
 	cp := toGormModel(checkPoint)
 	if err := r.db.WithContext(ctx).Create(&cp).Error; err != nil {
-		if errors.Is(err, gorm.ErrDuplicateKey) {
+		if errors.Is(err, gorm.ErrDuplicatedKey) {
 			return domain.CheckPoint{}, fmt.Errorf("gormrepo: create checkpoint: %w", ErrDuplicateRecord)
 		}
 		return domain.CheckPoint{}, fmt.Errorf("gormrepo: %v: %w", err, ErrInternal)
@@ -41,13 +41,24 @@ func (r *progressRepo) ReadCheckPointsByUserID(
 	offset int,
 ) ([]domain.CheckPoint, error) {
 
+	if limit < 0 {
+		limit = 20
+	}
+	if offset < 0 {
+		offset = 0
+	}
+
+	if limit > 100 { //TODO Это на первое время, потом надо менять.
+		limit = 100
+	}
+
 	var checkPoints []GormCheckPoint
 	if err := r.db.WithContext(ctx).Where("user_id = ?", userID).
 		Limit(limit).
 		Offset(offset).
 		Find(&checkPoints).
 		Error; err != nil {
-			return nil, nil //TODO ошибка
+			return nil, fmt.Errorf("gormrepo: %v: %w", err, ErrInternal)
 	}
 
 	dCheckPoints := make([]domain.CheckPoint, len(checkPoints))
