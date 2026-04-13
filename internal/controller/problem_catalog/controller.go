@@ -19,15 +19,18 @@ import (
 type ProblemCatalogController struct {
 	problemSVC        contracts.ProblemSVC
 	problemContentSVC contracts.ProblemContentSVC
+	logger logging.Logger
 }
 
 func NewProblemCatalogController(
 	problemSVC contracts.ProblemSVC,
 	problemContentSVC contracts.ProblemContentSVC,
+	logger logging.Logger,
 ) *ProblemCatalogController {
 	return &ProblemCatalogController{
 		problemSVC:        problemSVC,
 		problemContentSVC: problemContentSVC,
+		logger: logger,	
 	}
 }
 
@@ -47,11 +50,10 @@ func (c *ProblemCatalogController) RegisterRoutes(r chi.Router) {
 }
 
 func (c *ProblemCatalogController) CreateProblem(w http.ResponseWriter, r *http.Request) {
-	logger := logging.GetLogger()
 
 	var req createProblemRequest
 	if err := decodeJSON(r, &req); err != nil {
-		logger.WithError(err).Warn("invalid create problem request body")
+		c.logger.WithError(err).Warn("invalid create problem request body")
 		writeError(w, http.StatusBadRequest, "invalid request body")
 		return
 	}
@@ -66,7 +68,7 @@ func (c *ProblemCatalogController) CreateProblem(w http.ResponseWriter, r *http.
 
 	created, err := c.problemSVC.Create(r.Context(), problem)
 	if err != nil {
-		logger.WithError(err).WithField("slug", problem.Slug).Error("create problem failed")
+		c.logger.WithError(err).WithField("slug", problem.Slug).Error("create problem failed")
 		writeError(w, http.StatusBadRequest, err.Error())
 		return
 	}
@@ -76,7 +78,6 @@ func (c *ProblemCatalogController) CreateProblem(w http.ResponseWriter, r *http.
 
 func (c *ProblemCatalogController) ReadProblemBySlug(w http.ResponseWriter, r *http.Request) {
 	slug := chi.URLParam(r, "slug")
-	logger := logging.GetLogger()
 
 	problem, err := c.problemSVC.ReadBySlug(r.Context(), slug)
 	if err != nil {
@@ -85,7 +86,7 @@ func (c *ProblemCatalogController) ReadProblemBySlug(w http.ResponseWriter, r *h
 			return
 		}
 
-		logger.WithError(err).WithField("slug", slug).Error("read problem by slug failed")
+		c.logger.WithError(err).WithField("slug", slug).Error("read problem by slug failed")
 		writeError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
@@ -95,7 +96,6 @@ func (c *ProblemCatalogController) ReadProblemBySlug(w http.ResponseWriter, r *h
 
 func (c *ProblemCatalogController) UpdateProblem(w http.ResponseWriter, r *http.Request) {
 	slug := chi.URLParam(r, "slug")
-	logger := logging.GetLogger()
 
 	current, err := c.problemSVC.ReadBySlug(r.Context(), slug)
 	if err != nil {
@@ -104,14 +104,14 @@ func (c *ProblemCatalogController) UpdateProblem(w http.ResponseWriter, r *http.
 			return
 		}
 
-		logger.WithError(err).WithField("slug", slug).Error("load problem before update failed")
+		c.logger.WithError(err).WithField("slug", slug).Error("load problem before update failed")
 		writeError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
 
 	var req updateProblemRequest
 	if err := decodeJSON(r, &req); err != nil {
-		logger.WithError(err).Warn("invalid update problem request body")
+		c.logger.WithError(err).Warn("invalid update problem request body")
 		writeError(w, http.StatusBadRequest, "invalid request body")
 		return
 	}
@@ -131,7 +131,7 @@ func (c *ProblemCatalogController) UpdateProblem(w http.ResponseWriter, r *http.
 
 	updated, err := c.problemSVC.Update(r.Context(), updatedProblem)
 	if err != nil {
-		logger.WithError(err).WithField("id", current.ID).Error("update problem failed")
+		c.logger.WithError(err).WithField("id", current.ID).Error("update problem failed")
 		writeError(w, http.StatusBadRequest, err.Error())
 		return
 	}
@@ -141,7 +141,6 @@ func (c *ProblemCatalogController) UpdateProblem(w http.ResponseWriter, r *http.
 
 func (c *ProblemCatalogController) DeleteProblemBySlug(w http.ResponseWriter, r *http.Request) {
 	slug := chi.URLParam(r, "slug")
-	logger := logging.GetLogger()
 
 	if err := c.problemSVC.DeleteBySlug(r.Context(), slug); err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -149,7 +148,7 @@ func (c *ProblemCatalogController) DeleteProblemBySlug(w http.ResponseWriter, r 
 			return
 		}
 
-		logger.WithError(err).WithField("slug", slug).Error("delete problem by slug failed")
+		c.logger.WithError(err).WithField("slug", slug).Error("delete problem by slug failed")
 		writeError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
@@ -158,7 +157,6 @@ func (c *ProblemCatalogController) DeleteProblemBySlug(w http.ResponseWriter, r 
 }
 
 func (c *ProblemCatalogController) ListProblems(w http.ResponseWriter, r *http.Request) {
-	logger := logging.GetLogger()
 
 	filter := domain.ProblemFilter{
 		Tag:        strings.TrimSpace(r.URL.Query().Get("tag")),
@@ -169,7 +167,7 @@ func (c *ProblemCatalogController) ListProblems(w http.ResponseWriter, r *http.R
 
 	problems, err := c.problemSVC.List(r.Context(), filter)
 	if err != nil {
-		logger.WithError(err).Error("list problems failed")
+		c.logger.WithError(err).Error("list problems failed")
 		writeError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
@@ -178,7 +176,6 @@ func (c *ProblemCatalogController) ListProblems(w http.ResponseWriter, r *http.R
 }
 
 func (c *ProblemCatalogController) CreateProblemContent(w http.ResponseWriter, r *http.Request) {
-	logger := logging.GetLogger()
 	problemID, err := uuid.Parse(chi.URLParam(r, "problemID"))
 	if err != nil {
 		writeError(w, http.StatusBadRequest, "invalid problem id")
@@ -187,7 +184,7 @@ func (c *ProblemCatalogController) CreateProblemContent(w http.ResponseWriter, r
 
 	var req createProblemContentRequest
 	if err := decodeJSON(r, &req); err != nil {
-		logger.WithError(err).Warn("invalid create problem content request body")
+		c.logger.WithError(err).Warn("invalid create problem content request body")
 		writeError(w, http.StatusBadRequest, "invalid request body")
 		return
 	}
@@ -203,7 +200,7 @@ func (c *ProblemCatalogController) CreateProblemContent(w http.ResponseWriter, r
 
 	created, err := c.problemContentSVC.Create(r.Context(), content)
 	if err != nil {
-		logger.WithError(err).WithField("problem_id", problemID).Error("create problem content failed")
+		c.logger.WithError(err).WithField("problem_id", problemID).Error("create problem content failed")
 		writeError(w, http.StatusBadRequest, err.Error())
 		return
 	}
@@ -218,7 +215,6 @@ func (c *ProblemCatalogController) ReadProblemContentByProblemID(w http.Response
 		return
 	}
 
-	logger := logging.GetLogger()
 	content, err := c.problemContentSVC.ReadByProblemID(r.Context(), problemID)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -226,7 +222,7 @@ func (c *ProblemCatalogController) ReadProblemContentByProblemID(w http.Response
 			return
 		}
 
-		logger.WithError(err).WithField("problem_id", problemID).Error("read problem content failed")
+		c.logger.WithError(err).WithField("problem_id", problemID).Error("read problem content failed")
 		writeError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
@@ -235,7 +231,6 @@ func (c *ProblemCatalogController) ReadProblemContentByProblemID(w http.Response
 }
 
 func (c *ProblemCatalogController) UpdateProblemContent(w http.ResponseWriter, r *http.Request) {
-	logger := logging.GetLogger()
 	problemID, err := uuid.Parse(chi.URLParam(r, "problemID"))
 	if err != nil {
 		writeError(w, http.StatusBadRequest, "invalid problem id")
@@ -249,14 +244,14 @@ func (c *ProblemCatalogController) UpdateProblemContent(w http.ResponseWriter, r
 			return
 		}
 
-		logger.WithError(err).WithField("problem_id", problemID).Error("load problem content before update failed")
+		c.logger.WithError(err).WithField("problem_id", problemID).Error("load problem content before update failed")
 		writeError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
 
 	var req updateProblemContentRequest
 	if err := decodeJSON(r, &req); err != nil {
-		logger.WithError(err).Warn("invalid update problem content request body")
+		c.logger.WithError(err).Warn("invalid update problem content request body")
 		writeError(w, http.StatusBadRequest, "invalid request body")
 		return
 	}
@@ -275,7 +270,7 @@ func (c *ProblemCatalogController) UpdateProblemContent(w http.ResponseWriter, r
 
 	updated, err := c.problemContentSVC.Update(r.Context(), updatedContent)
 	if err != nil {
-		logger.WithError(err).WithField("problem_id", problemID).Error("update problem content failed")
+		c.logger.WithError(err).WithField("problem_id", problemID).Error("update problem content failed")
 		writeError(w, http.StatusBadRequest, err.Error())
 		return
 	}
@@ -284,7 +279,6 @@ func (c *ProblemCatalogController) UpdateProblemContent(w http.ResponseWriter, r
 }
 
 func (c *ProblemCatalogController) DeleteProblemContentByProblemID(w http.ResponseWriter, r *http.Request) {
-	logger := logging.GetLogger()
 	problemID, err := uuid.Parse(chi.URLParam(r, "problemID"))
 	if err != nil {
 		writeError(w, http.StatusBadRequest, "invalid problem id")
@@ -297,7 +291,7 @@ func (c *ProblemCatalogController) DeleteProblemContentByProblemID(w http.Respon
 			return
 		}
 
-		logger.WithError(err).WithField("problem_id", problemID).Error("delete problem content failed")
+		c.logger.WithError(err).WithField("problem_id", problemID).Error("delete problem content failed")
 		writeError(w, http.StatusInternalServerError, err.Error())
 		return
 	}

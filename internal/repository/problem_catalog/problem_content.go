@@ -11,29 +11,32 @@ import (
 
 type RepositoryProblemContent struct {
 	db *gorm.DB
+	logger logging.Logger
 }
 
-func NewRepositoryProblemContent(db *gorm.DB) *RepositoryProblemContent {
-	return &RepositoryProblemContent{db: db}
+func NewRepositoryProblemContent(
+	db *gorm.DB,
+	logger logging.Logger,
+) *RepositoryProblemContent {
+	return &RepositoryProblemContent{db: db, logger: logger}
 }
 
 func (r *RepositoryProblemContent) Create(ctx context.Context, pc domain.ProblemContent) (domain.ProblemContent, error) {
 	model := ToProblemContentModel(pc)
-	logger := logging.GetLogger()
 
 	if model.ID == uuid.Nil {
 		model.ID = uuid.New()
 	}
 
 	if err := r.db.WithContext(ctx).Create(&model).Error; err != nil {
-		logger.WithError(err).WithFields(map[string]any{
+		r.logger.WithError(err).WithFields(map[string]any{
 			"id":         model.ID,
 			"problem_id": model.ProblemID,
 		}).Error("create problem content failed")
 		return domain.ProblemContent{}, err
 	}
 
-	logger.WithFields(map[string]any{
+	r.logger.WithFields(map[string]any{
 		"id":         model.ID,
 		"problem_id": model.ProblemID,
 	}).Info("problem content created")
@@ -58,7 +61,6 @@ func (r *RepositoryProblemContent) ReadByProblemID(ctx context.Context, problemI
 }
 
 func (r *RepositoryProblemContent) Update(ctx context.Context, pc domain.ProblemContent) (domain.ProblemContent, error) {
-	logger := logging.GetLogger()
 
 	if pc.ProblemID == uuid.Nil {
 		return domain.ProblemContent{}, domain.ErrProblemContentProblemIDRequired
@@ -78,7 +80,7 @@ func (r *RepositoryProblemContent) Update(ctx context.Context, pc domain.Problem
 		})
 
 	if tx.Error != nil {
-		logger.WithError(tx.Error).WithField("problem_id", pc.ProblemID).Error("update problem content failed")
+		r.logger.WithError(tx.Error).WithField("problem_id", pc.ProblemID).Error("update problem content failed")
 		return domain.ProblemContent{}, tx.Error
 	}
 
@@ -90,11 +92,11 @@ func (r *RepositoryProblemContent) Update(ctx context.Context, pc domain.Problem
 	if err := r.db.WithContext(ctx).
 		Where("problem_id = ?", pc.ProblemID).
 		First(&updated).Error; err != nil {
-		logger.WithError(err).WithField("problem_id", pc.ProblemID).Error("read updated problem content failed")
+		r.logger.WithError(err).WithField("problem_id", pc.ProblemID).Error("read updated problem content failed")
 		return domain.ProblemContent{}, err
 	}
 
-	logger.WithFields(map[string]any{
+	r.logger.WithFields(map[string]any{
 		"id":         updated.ID,
 		"problem_id": updated.ProblemID,
 	}).Info("problem content updated")
@@ -103,7 +105,6 @@ func (r *RepositoryProblemContent) Update(ctx context.Context, pc domain.Problem
 }
 
 func (r *RepositoryProblemContent) DeleteByProblemID(ctx context.Context, problemID uuid.UUID) error {
-	logger := logging.GetLogger()
 
 	if problemID == uuid.Nil {
 		return domain.ErrProblemContentProblemIDRequired
@@ -114,7 +115,7 @@ func (r *RepositoryProblemContent) DeleteByProblemID(ctx context.Context, proble
 		Delete(&ProblemContent{})
 
 	if tx.Error != nil {
-		logger.WithError(tx.Error).WithField("problem_id", problemID).Error("delete problem content failed")
+		r.logger.WithError(tx.Error).WithField("problem_id", problemID).Error("delete problem content failed")
 		return tx.Error
 	}
 
@@ -122,6 +123,6 @@ func (r *RepositoryProblemContent) DeleteByProblemID(ctx context.Context, proble
 		return gorm.ErrRecordNotFound
 	}
 
-	logger.WithField("problem_id", problemID).Info("problem content deleted")
+	r.logger.WithField("problem_id", problemID).Info("problem content deleted")
 	return nil
 }
