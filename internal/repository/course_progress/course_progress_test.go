@@ -105,6 +105,13 @@ func runMigrations(dsn string) error {
 	return nil
 }
 
-func TestCreateCheckPoint()
-func TestReadCheckPointsByUserID()
+
+
+func TestCreateCheckPoint(t *testing.T) {
+
+}
+
+func TestReadCheckPointsByUserID(t *testing.T) {
+
+}
 
