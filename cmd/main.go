@@ -9,7 +9,7 @@ import (
 	appmiddleware "github.com/WebCraftersGH/Education-service/internal/middleware"
 	repo "github.com/WebCraftersGH/Education-service/internal/repository/problem_catalog"
 	uc "github.com/WebCraftersGH/Education-service/internal/usecase/problem_catalog"
-	"github.com/WebCraftersGH/Education-service/pgk/logging"
+	"github.com/WebCraftersGH/Education-service/pkg/logging"
 	"github.com/go-chi/chi/v5"
 )
 
