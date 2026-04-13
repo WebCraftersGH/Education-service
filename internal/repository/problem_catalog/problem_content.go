@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/WebCraftersGH/Education-service/internal/domain"
-	"github.com/WebCraftersGH/Education-service/pgk/logging"
+	"github.com/WebCraftersGH/Education-service/pkg/logging"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 )

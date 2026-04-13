@@ -10,7 +10,7 @@ import (
 	"github.com/WebCraftersGH/Education-service/internal/contracts"
 	basecontroller "github.com/WebCraftersGH/Education-service/internal/controller"
 	"github.com/WebCraftersGH/Education-service/internal/domain"
-	"github.com/WebCraftersGH/Education-service/pgk/logging"
+	"github.com/WebCraftersGH/Education-service/pkg/logging"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
