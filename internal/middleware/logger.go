@@ -5,6 +5,7 @@ import (
 	"github.com/google/uuid"
 	"context"
 
+	"github.com/WebCraftersGH/Education-service/internal/requestctx"
 )
 
 const requestIDKey = "request-id"
@@ -13,8 +14,8 @@ const requestIDKey = "request-id"
 func GenerateRequestID (next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		reqID := uuid.New().String()
-		ctx := context.WithValue(r.Context(), requestIDKey, reqID)	
-		
+		ctx := requestctx.WithRequestID(r.Context(), reqID)	
+			
 		r = r.WithContext(ctx)
 
 		w.Header().Set("X-Request-ID", reqID)
