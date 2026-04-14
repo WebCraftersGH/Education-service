@@ -8,8 +8,8 @@ import (
 
 type GormCheckPoint struct {
 	ID uuid.UUID `gorm:"type:uuid;primaryKey"`
-	UserID uuid.UUID `gorm:"type:uuid;not null"`
-	Slug string `gorm:"varchar(255);not null;uniqueIndex"`
+	UserID uuid.UUID `gorm:"type:uuid;not null;uniqueIndex:checkpoints_user_id_slug_key"`
+	Slug string `gorm:"varchar(255);not null;uniqueIndex:checkpoints_user_id_slug_key"`
 	CreatedAt time.Time `gorm:"not null;autoCreateTime"`
 	UpdatedAt time.Time `gorm:"not null;autoUpdateTime"`
 }
