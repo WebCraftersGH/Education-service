@@ -3,7 +3,6 @@ package middleware
 import (
 	"net/http"
 	"github.com/google/uuid"
-	"context"
 
 	"github.com/WebCraftersGH/Education-service/internal/requestctx"
 )
