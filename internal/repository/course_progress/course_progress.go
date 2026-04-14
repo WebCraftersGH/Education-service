@@ -1,9 +1,11 @@
 package courseprogress
 
 import (
+	"fmt"
 	"context"
 	"errors"
 
+	"github.com/WebCraftersGH/Education-service/internal/apperrors"
 	"github.com/WebCraftersGH/Education-service/internal/domain"
 	"github.com/WebCraftersGH/Education-service/internal/logctx"
 	"github.com/WebCraftersGH/Education-service/pkg/logging"
@@ -36,11 +38,14 @@ func (r *progressRepo) CreateCheckPoint(
 
 		switch {
 		case errors.Is(err, gorm.ErrDuplicatedKey):
-			logger.WithError(err).Info("the record already exists")
-			return domain.CheckPoint{}, ErrDuplicateRecord
+			return domain.CheckPoint{}, fmt.Errorf(
+				"the record already exists: %w", 
+				errors.Join(apperrors.ErrDuplicateRecord, err))
 		default:
 			logger.WithError(err).Error("create checkpoint failed")
-			return domain.CheckPoint{}, ErrInternal
+			return domain.CheckPoint{}, fmt.Errorf(
+				"create checkpoint failed: %w", 
+				errors.Join(apperrors.ErrInternal, err))
 		}
 	}
 
@@ -53,18 +58,7 @@ func (r *progressRepo) ReadCheckPointsByUserID(
 	limit, 
 	offset int,
 ) ([]domain.CheckPoint, error) {
-	
-	if limit <= 0 {
-		limit = 20
-	}
-	if offset < 0 {
-		offset = 0
-	}
-
-	if limit > 100 { //TODO Это на первое время, потом надо менять.
-		limit = 100
-	}
-	
+		
 	logger := logctx.WithContext(ctx, r.logger).WithFields(map[string]any{
 		"user_id": userID.String(),
 		"limit": limit,
@@ -76,13 +70,13 @@ func (r *progressRepo) ReadCheckPointsByUserID(
 	if err := r.db.WithContext(ctx).Where("user_id = ?", userID).
 		Limit(limit).
 		Offset(offset).
+		Order("created_at DESC").	
 		Find(&checkPoints).
 		Error; err != nil {
-			switch { //TODO Лишняя обертка, но пока оставлю
-				default:
-					logger.WithError(err).Error("read checkpoints by user id failed")
-					return nil, ErrInternal
-			}
+			logger.WithError(err).Error("read checkpoints by user id failed")
+			return nil, fmt.Errorf(
+				"read checkpoints by user id: %w", 
+				errors.Join(apperrors.ErrInternal, err))
 	}
 
 	dCheckPoints := make([]domain.CheckPoint, len(checkPoints))
