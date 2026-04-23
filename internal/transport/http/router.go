@@ -9,6 +9,8 @@ import (
 	httphandlers "github.com/WebCraftersGH/Education-service/internal/transport/http/handlers"
 )
 
+const servicePrefix = "edu"
+
 func NewRouter(
 	progressHandler *httphandlers.ProgressHandler,
 	problemHandler *httphandlers.ProblemHandler,
@@ -16,12 +18,14 @@ func NewRouter(
 ) *mux.Router {
 	router := mux.NewRouter().StrictSlash(true)
 
-	// DocsHandlers
-	router.HandleFunc("/swagger/openapi.json", docsHandler.ServeSpec).Methods(http.MethodGet)
-	router.HandleFunc("/swagger/", docsHandler.ServeUI).Methods(http.MethodGet)
-	router.HandleFunc("/swagger", docsHandler.RedirectToUI).Methods(http.MethodGet)
+	baseRouter := router.PathPrefix("/" + servicePrefix).Subrouter()
 
-	api := router.PathPrefix("/api/v1").Subrouter()
+	// DocsHandlers
+	baseRouter.HandleFunc("/swagger/openapi.json", docsHandler.ServeSpec).Methods(http.MethodGet)
+	baseRouter.HandleFunc("/swagger/", docsHandler.ServeUI).Methods(http.MethodGet)
+	baseRouter.HandleFunc("/swagger", docsHandler.RedirectToUI).Methods(http.MethodGet)
+
+	api := baseRouter.PathPrefix("/api/v1").Subrouter()
 
 	// ProgressHandlers
 	api.HandleFunc("/me/progress", progressHandler.Create).Methods(http.MethodPost)
