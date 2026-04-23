@@ -1,4 +1,4 @@
-package controller
+package handlers
 
 import (
 	"encoding/json"
@@ -7,23 +7,23 @@ import (
 	"strings"
 )
 
-func DecodeJSON(r *http.Request, dst any) error {
+func decodeJSON(r *http.Request, dst any) error {
 	decoder := json.NewDecoder(r.Body)
 	decoder.DisallowUnknownFields()
 	return decoder.Decode(dst)
 }
 
-func WriteJSON(w http.ResponseWriter, status int, data any) {
+func writeJSON(w http.ResponseWriter, status int, data any) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
 	_ = json.NewEncoder(w).Encode(data)
 }
 
-func WriteError(w http.ResponseWriter, status int, message string) {
-	WriteJSON(w, status, ErrorResponse{Error: message})
+func writeError(w http.ResponseWriter, status int, message string) {
+	writeJSON(w, status, ErrorResponse{Error: message})
 }
 
-func ParseIntQuery(value string, def int) int {
+func parseIntQuery(value string, def int) int {
 	if strings.TrimSpace(value) == "" {
 		return def
 	}

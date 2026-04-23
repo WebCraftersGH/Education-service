@@ -19,6 +19,8 @@ type Config struct {
 	DBName     string
 	DBSSLMode  string
 	DBTimeZone string
+	TokenCookie string	
+	AuthServiceURL string
 }
 
 func Load(envPath string) (Config, error) {
@@ -33,10 +35,12 @@ func Load(envPath string) (Config, error) {
 		DBHost:     getEnv("DB_HOST", "localhost"),
 		DBPort:     getEnv("DB_PORT", "5432"),
 		DBUser:     getEnv("DB_USER", "postgres"),
-		DBPass: os.Getenv("DB_PASS"),
+		DBPass: 		getEnv("DB_PASS", ""),
 		DBName:     getEnv("DB_NAME", "education_service"),
 		DBSSLMode:  getEnv("DB_SSLMODE", "disable"),
 		DBTimeZone: getEnv("DB_TIMEZONE", "UTC"),
+		TokenCookie: getEnv("TOKEN_COOKIE_NAME", "token"),	
+		AuthServiceURL: getEnv("AUTH_SERVICE_URL", "localhost:8080/auth"),
 	}
 
 	if err := cfg.Validate(); err != nil {
