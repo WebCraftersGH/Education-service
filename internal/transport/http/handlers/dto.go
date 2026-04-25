@@ -17,6 +17,10 @@ type ProgressResponse struct {
 	UpdatedAt time.Time `json:"updated_at"`
 }
 
+type ProgressResponseList struct {
+	ProgressList []ProgressResponse `json:"progress_list"`
+}
+
 type ErrorResponse struct {
 	Error string `json:"error"`
 }

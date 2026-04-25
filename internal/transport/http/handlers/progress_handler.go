@@ -81,5 +81,20 @@ func (h *ProgressHandler) ListMyProgress(w http.ResponseWriter, r *http.Request)
 	}
 
 	progressList, err := h.usecase.ProgressList(r.Context(), userID, limit, offset)
+	if err != nil {
+		switch {
+		case errors.Is(err, apperrors.ErrInvalidArgument):
+			writeError(w, http.StatusBadRequest, "invalid user id")
+			return
+		case errors.Is(err, apperrors.ErrInternal):
+			writeError(w, http.StatusInternalServerError, "internal server error")
+			return
+		default:
+			h.logger.WithError(err).Error("unexpected error in List My Progress")
+			writeError(w, http.StatusInternalServerError, "internal server error")
+		}
+		return
+	}
 
+	writeJSON(w, http.StatusOK, toProgressResponseList(progressList))
 }
