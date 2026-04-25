@@ -1,49 +1,55 @@
 package middleware
 
 import (
-	"errors"
-	"strings"
 	"context"
-	"net/http"	
+	"errors"
 	"github.com/google/uuid"
+	"net/http"
+	"strings"
 
 	"github.com/WebCraftersGH/Education-service/internal/authclient"
 	"github.com/WebCraftersGH/Education-service/internal/requestctx"
 )
 
-type AuthChecker interface{
+type AuthChecker interface {
 	Check(ctx context.Context, token string) (uuid.UUID, error)
 }
 
-func AuthFromCookie(cookieName string, authChecker AuthChecker) func(http.Handler) http.Handler {
+func AuthFromToken(authChecker AuthChecker) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			cookie, err := r.Cookie(cookieName)
-			if err != nil {
-				http.Error(w, "unauthorized", http.StatusUnauthorized)
+			authHeader := r.Header.Get("Authorization")
+			if authHeader == "" {
+				http.Error(w, "", http.StatusUnauthorized)
 				return
 			}
 
-			token := strings.TrimSpace(cookie.Value)
+			const bearerPrefix = "Bearer "
+			if !strings.HasPrefix(authHeader, bearerPrefix) {
+				http.Error(w, "", http.StatusUnauthorized)
+				return
+			}
+
+			token := strings.TrimSpace(strings.TrimPrefix(authHeader, bearerPrefix))
 			if token == "" {
-				http.Error(w, "unauthorized", http.StatusUnauthorized)
+				http.Error(w, "", http.StatusUnauthorized)
 				return
 			}
 
 			userID, err := authChecker.Check(r.Context(), token)
 			if err != nil {
-				if errors.Is(err, authclient.ErrUnauthorized) {
-					http.Error(w, "unauthorized", http.StatusUnauthorized)
+				switch {
+				case errors.Is(err, authclient.ErrUnauthorized):
+					http.Error(w, "", http.StatusUnauthorized)
+					return
+				default:
+					http.Error(w, "", http.StatusServiceUnavailable)
 					return
 				}
-
-				http.Error(w, "auth service unavailable", http.StatusServiceUnavailable)
-				return
 			}
 
 			ctx := requestctx.WithUserID(r.Context(), userID)
 			r = r.WithContext(ctx)
-
 			next.ServeHTTP(w, r)
 		})
 	}
