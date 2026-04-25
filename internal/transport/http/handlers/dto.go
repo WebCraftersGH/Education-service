@@ -1,8 +1,8 @@
-package courseprogress
+package handlers
 
 import (
-	"time"
 	"github.com/google/uuid"
+	"time"
 )
 
 type SetProgressRequest struct {
@@ -10,9 +10,13 @@ type SetProgressRequest struct {
 }
 
 type ProgressResponse struct {
-	ID uuid.UUID `json:"id"`
-	UserID uuid.UUID `json:"user_id"`
-	Slug string `json:"slug"`
+	ID        uuid.UUID `json:"id"`
+	UserID    uuid.UUID `json:"user_id"`
+	Slug      string    `json:"slug"`
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
+}
+
+type ErrorResponse struct {
+	Error string `json:"error"`
 }

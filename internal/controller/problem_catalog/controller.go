@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
-	"strconv"
 	"strings"
 
 	"github.com/WebCraftersGH/Education-service/internal/contracts"
@@ -19,7 +18,7 @@ import (
 type ProblemCatalogController struct {
 	problemSVC        contracts.ProblemSVC
 	problemContentSVC contracts.ProblemContentSVC
-	logger logging.Logger
+	logger            logging.Logger
 }
 
 func NewProblemCatalogController(
@@ -30,7 +29,7 @@ func NewProblemCatalogController(
 	return &ProblemCatalogController{
 		problemSVC:        problemSVC,
 		problemContentSVC: problemContentSVC,
-		logger: logger,	
+		logger:            logger,
 	}
 }
 
@@ -161,8 +160,8 @@ func (c *ProblemCatalogController) ListProblems(w http.ResponseWriter, r *http.R
 	filter := domain.ProblemFilter{
 		Tag:        strings.TrimSpace(r.URL.Query().Get("tag")),
 		Difficulty: strings.TrimSpace(r.URL.Query().Get("difficulty")),
-		Limit:      parseIntQuery(r.URL.Query().Get("limit"), 20),
-		Offset:     parseIntQuery(r.URL.Query().Get("offset"), 0),
+		Limit:      basecontroller.ParseIntQuery(r.URL.Query().Get("limit"), 20),
+		Offset:     basecontroller.ParseIntQuery(r.URL.Query().Get("offset"), 0),
 	}
 
 	problems, err := c.problemSVC.List(r.Context(), filter)
@@ -313,17 +312,4 @@ func writeJSON(w http.ResponseWriter, status int, data any) {
 
 func writeError(w http.ResponseWriter, status int, message string) {
 	writeJSON(w, status, basecontroller.ErrorResponse{Error: message})
-}
-
-func parseIntQuery(value string, def int) int {
-	if strings.TrimSpace(value) == "" {
-		return def
-	}
-
-	n, err := strconv.Atoi(value)
-	if err != nil {
-		return def
-	}
-
-	return n
 }
