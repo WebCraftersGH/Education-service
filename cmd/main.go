@@ -73,7 +73,7 @@ func main() {
 
 	logger.WithField("address", cfg.HTTPAddress()).Info("http server started")
 	server := &http.Server{
-		Addr:    "localhost:" + cfg.HTTPPort,
+		Addr:    ":" + cfg.HTTPPort,
 		Handler: router,
 	}
 
