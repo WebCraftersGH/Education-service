@@ -1,4 +1,4 @@
-package courseprogress
+package handlers
 
 import (
 	"github.com/WebCraftersGH/Education-service/internal/domain"

@@ -11,6 +11,12 @@ import (
 	uc "github.com/WebCraftersGH/Education-service/internal/usecase/problem_catalog"
 	"github.com/WebCraftersGH/Education-service/pkg/logging"
 	"github.com/go-chi/chi/v5"
+
+	progressCTRL "github.com/WebCraftersGH/Education-service/internal/controller/course_progress"
+	progressRepo "github.com/WebCraftersGH/Education-service/internal/repository/course_progress"
+	progressSVC "github.com/WebCraftersGH/Education-service/internal/usecase/course_progress"
+
+	"github.com/WebCraftersGH/Education-service/internal/authclient"
 )
 
 func main() {
@@ -26,11 +32,12 @@ func main() {
 	defer closer.Close()
 
 	logger.WithFields(map[string]any{
-		"app_env":   cfg.AppEnv,
-		"http_port": cfg.HTTPPort,
-		"db_host":   cfg.DBHost,
-		"db_port":   cfg.DBPort,
-		"db_name":   cfg.DBName,
+		"app_env":     cfg.AppEnv,
+		"http_port":   cfg.HTTPPort,
+		"db_host":     cfg.DBHost,
+		"db_port":     cfg.DBPort,
+		"db_name":     cfg.DBName,
+		"db_password": cfg.DBPass,
 	}).Info("config loaded")
 
 	db, err := database.NewPostgres(cfg)
@@ -40,21 +47,27 @@ func main() {
 
 	problemRepo := repo.NewRepository(db, logger)
 	problemContentRepo := repo.NewRepositoryProblemContent(db, logger)
-
 	problemUC := uc.NewProblemUseCase(problemRepo)
 	problemContentUC := uc.NewProblemContentUseCase(problemContentRepo)
-
 	problemCatalogCTRL := controller.NewProblemCatalogController(
 		problemUC,
 		problemContentUC,
 		logger,
 	)
 
+	pgRepo := progressRepo.NewProgressRepo(db, logger)
+	pgSVC := progressSVC.NewCourseProgress(pgRepo)
+	pgCTRL := progressCTRL.NewCourseProgressController(logger, pgSVC)
+
+	authCl := authclient.New(cfg.AuthServiceURL)
+
 	r := chi.NewRouter()
 
 	r.Use(appmiddleware.GenerateRequestID)
+	r.Use(appmiddleware.AuthFromCookie(cfg.TokenCookie, authCl))
 
 	problemCatalogCTRL.RegisterRoutes(r)
+	pgCTRL.RegisterRoutes(r)
 
 	logger.WithField("address", cfg.HTTPAddress()).Info("http server started")
 	if err := http.ListenAndServe(cfg.HTTPAddress(), r); err != nil {
