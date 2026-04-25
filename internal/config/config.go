@@ -12,14 +12,14 @@ type Config struct {
 	HTTPPort string
 	LogLevel string
 
-	DBHost     string
-	DBPort     string
-	DBUser     string
-	DBPass string
-	DBName     string
-	DBSSLMode  string
-	DBTimeZone string
-	TokenCookie string	
+	DBHost         string
+	DBPort         string
+	DBUser         string
+	DBPass         string
+	DBName         string
+	DBSSLMode      string
+	DBTimeZone     string
+	TokenCookie    string
 	AuthServiceURL string
 }
 
@@ -29,23 +29,25 @@ func Load(envPath string) (Config, error) {
 	}
 
 	cfg := Config{
-		AppEnv:     getEnv("APP_ENV", "local"),
-		HTTPPort:   getEnv("HTTP_PORT", "8080"),
-		LogLevel:   getEnv("LOG_LEVEL", "info"),
-		DBHost:     getEnv("DB_HOST", "localhost"),
-		DBPort:     getEnv("DB_PORT", "5432"),
-		DBUser:     getEnv("DB_USER", "postgres"),
-		DBPass: 		getEnv("DB_PASS", ""),
-		DBName:     getEnv("DB_NAME", "education_service"),
-		DBSSLMode:  getEnv("DB_SSLMODE", "disable"),
-		DBTimeZone: getEnv("DB_TIMEZONE", "UTC"),
-		TokenCookie: getEnv("TOKEN_COOKIE_NAME", "token"),	
+		AppEnv:         getEnv("APP_ENV", "local"),
+		HTTPPort:       getEnv("HTTP_PORT", "8080"),
+		LogLevel:       getEnv("LOG_LEVEL", "info"),
+		DBHost:         getEnv("DB_HOST", "localhost"),
+		DBPort:         getEnv("DB_PORT", "5432"),
+		DBUser:         getEnv("DB_USER", "eduuser"),
+		DBPass:         getEnv("DB_PASSWORD", "edupass"),
+		DBName:         getEnv("DB_NAME", "education_service"),
+		DBSSLMode:      getEnv("DB_SSLMODE", "disable"),
+		DBTimeZone:     getEnv("DB_TIMEZONE", "UTC"),
+		TokenCookie:    getEnv("TOKEN_COOKIE_NAME", "token"),
 		AuthServiceURL: getEnv("AUTH_SERVICE_URL", "localhost:8080/auth"),
 	}
 
 	if err := cfg.Validate(); err != nil {
 		return Config{}, err
 	}
+
+	fmt.Println(cfg)
 
 	return cfg, nil
 }
