@@ -2,21 +2,22 @@ package main
 
 import (
 	"net/http"
+	"os"
 
 	"github.com/WebCraftersGH/Education-service/internal/config"
-	controller "github.com/WebCraftersGH/Education-service/internal/controller/problem_catalog"
 	"github.com/WebCraftersGH/Education-service/internal/database"
-	appmiddleware "github.com/WebCraftersGH/Education-service/internal/middleware"
 	repo "github.com/WebCraftersGH/Education-service/internal/repository/problem_catalog"
 	uc "github.com/WebCraftersGH/Education-service/internal/usecase/problem_catalog"
 	"github.com/WebCraftersGH/Education-service/pkg/logging"
-	"github.com/go-chi/chi/v5"
 
-	progressCTRL "github.com/WebCraftersGH/Education-service/internal/controller/course_progress"
 	progressRepo "github.com/WebCraftersGH/Education-service/internal/repository/course_progress"
 	progressSVC "github.com/WebCraftersGH/Education-service/internal/usecase/course_progress"
 
 	"github.com/WebCraftersGH/Education-service/internal/authclient"
+
+	transporthttp "github.com/WebCraftersGH/Education-service/internal/transport/http"
+	docsHandlers "github.com/WebCraftersGH/Education-service/internal/transport/http/docs"
+	handlers "github.com/WebCraftersGH/Education-service/internal/transport/http/handlers"
 )
 
 func main() {
@@ -49,28 +50,35 @@ func main() {
 	problemContentRepo := repo.NewRepositoryProblemContent(db, logger)
 	problemUC := uc.NewProblemUseCase(problemRepo)
 	problemContentUC := uc.NewProblemContentUseCase(problemContentRepo)
-	problemCatalogCTRL := controller.NewProblemCatalogController(
-		problemUC,
-		problemContentUC,
-		logger,
-	)
 
 	pgRepo := progressRepo.NewProgressRepo(db, logger)
 	pgSVC := progressSVC.NewCourseProgress(pgRepo)
-	pgCTRL := progressCTRL.NewCourseProgressController(logger, pgSVC)
 
 	authCl := authclient.New(cfg.AuthServiceURL)
 
-	r := chi.NewRouter()
+	problemHandler := handlers.NewProblemHandler(problemUC)
+	problemContentHandler := handlers.NewProblemContentHandler(problemContentUC)
+	progressHandler := handlers.NewProgressHandler(pgSVC, logger)
+	docsHandler := docsHandlers.NewDocsHandler()
+	healthHandler := handlers.NewHealthHandler()
 
-	r.Use(appmiddleware.GenerateRequestID)
-	r.Use(appmiddleware.AuthFromCookie(cfg.TokenCookie, authCl))
-
-	problemCatalogCTRL.RegisterRoutes(r)
-	pgCTRL.RegisterRoutes(r)
+	router := transporthttp.NewRouter(
+		progressHandler,
+		problemHandler,
+		problemContentHandler,
+		healthHandler,
+		docsHandler,
+		authCl,
+	)
 
 	logger.WithField("address", cfg.HTTPAddress()).Info("http server started")
-	if err := http.ListenAndServe(cfg.HTTPAddress(), r); err != nil {
-		logger.WithError(err).Fatal("http server stopped")
+	server := &http.Server{
+		Addr:    "localhost:" + cfg.HTTPPort,
+		Handler: router,
+	}
+
+	if err := server.ListenAndServe(); err != nil {
+		logger.WithError(err).Fatal("http server error")
+		os.Exit(1)
 	}
 }

@@ -17,8 +17,8 @@ type ProgressHandler struct {
 	logger  logging.Logger
 }
 
-func NewProgressHandler() *ProgressHandler {
-	return &ProgressHandler{}
+func NewProgressHandler(usecase contracts.ProgressSVC, logger logging.Logger) *ProgressHandler {
+	return &ProgressHandler{usecase: usecase, logger: logger}
 }
 
 func (h *ProgressHandler) Create(w http.ResponseWriter, r *http.Request) {

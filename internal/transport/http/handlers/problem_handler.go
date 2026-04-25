@@ -1,11 +1,16 @@
 package handlers
 
-import "net/http"
+import (
+	"github.com/WebCraftersGH/Education-service/internal/contracts"
+	"net/http"
+)
 
-type ProblemHandler struct{}
+type ProblemHandler struct {
+	usecase contracts.ProblemSVC
+}
 
-func NewProblemHandler() *ProgressHandler {
-	return &ProgressHandler{}
+func NewProblemHandler(usecase contracts.ProblemSVC) *ProblemHandler {
+	return &ProblemHandler{usecase: usecase}
 }
 
 func (h *ProblemHandler) Create(w http.ResponseWriter, r *http.Request) {}
