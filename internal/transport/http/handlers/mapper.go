@@ -13,3 +13,12 @@ func toProgressResponse(checkpoint domain.CheckPoint) ProgressResponse {
 		UpdatedAt: checkpoint.UpdatedAt,
 	}
 }
+
+func toProgressResponseList(checkpoints []domain.CheckPoint) ProgressResponseList {
+	list := make([]ProgressResponse, len(checkpoints))
+	for i, checkpoint := range checkpoints {
+		ck := toProgressResponse(checkpoint)
+		list[i] = ck
+	}
+	return ProgressResponseList{ProgressList: list}
+}
