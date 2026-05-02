@@ -14,6 +14,7 @@ import (
 	progressSVC "github.com/WebCraftersGH/Education-service/internal/usecase/course_progress"
 
 	"github.com/WebCraftersGH/Education-service/internal/authclient"
+	"github.com/WebCraftersGH/Education-service/internal/middleware"
 
 	transporthttp "github.com/WebCraftersGH/Education-service/internal/transport/http"
 	docsHandlers "github.com/WebCraftersGH/Education-service/internal/transport/http/docs"
@@ -69,12 +70,19 @@ func main() {
 		healthHandler,
 		docsHandler,
 		authCl,
+		cfg.DEBUG_MODE,
 	)
+
+	var handler http.Handler = router
+
+	if cfg.DEBUG_MODE {
+		handler = middleware.CORSMiddleware(handler)
+	}
 
 	logger.WithField("address", cfg.HTTPAddress()).Info("http server started")
 	server := &http.Server{
 		Addr:    ":" + cfg.HTTPPort,
-		Handler: router,
+		Handler: handler,
 	}
 
 	if err := server.ListenAndServe(); err != nil {

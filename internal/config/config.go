@@ -21,6 +21,7 @@ type Config struct {
 	DBTimeZone     string
 	TokenCookie    string
 	AuthServiceURL string
+	DEBUG_MODE     bool
 }
 
 func Load(envPath string) (Config, error) {
@@ -41,6 +42,7 @@ func Load(envPath string) (Config, error) {
 		DBTimeZone:     getEnv("DB_TIMEZONE", "UTC"),
 		TokenCookie:    getEnv("TOKEN_COOKIE_NAME", "token"),
 		AuthServiceURL: getEnv("AUTH_SERVICE_URL", "http://localhost:8080/api/v1"),
+		DEBUG_MODE:     getEnvAsBool("DEBUG_MODE", true),
 	}
 
 	if err := cfg.Validate(); err != nil {
@@ -73,6 +75,18 @@ func (c Config) Validate() error {
 	}
 
 	return nil
+}
+
+func getEnvAsBool(key string, defaultValue bool) bool {
+	valueStr := getEnv(key, "")
+	switch valueStr {
+	case "true":
+		return true
+	case "false":
+		return false
+	default:
+		return defaultValue
+	}
 }
 
 func (c Config) HTTPAddress() string {
