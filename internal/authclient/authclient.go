@@ -51,6 +51,7 @@ func (c *Client) Check(ctx context.Context, token string) (uuid.UUID, error) {
 		c.baseURL+"/auth/check",
 		nil,
 	)
+	c.logger.WithField("req", req).Info("request created")
 	if err != nil {
 		return uuid.Nil, fmt.Errorf("authclient: build request: %w", err)
 	}
@@ -59,12 +60,14 @@ func (c *Client) Check(ctx context.Context, token string) (uuid.UUID, error) {
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
+		c.logger.WithError(err).Info("do request error")
 		return uuid.Nil, fmt.Errorf("authclient: do request: %w", err)
 	}
 	defer resp.Body.Close()
 
 	var authResp AuthResponse
 	if err := json.NewDecoder(resp.Body).Decode(&authResp); err != nil {
+		c.logger.WithError(err).Error("decode response error")
 		return uuid.Nil, fmt.Errorf("authclient: decode response: %w", err)
 	}
 
