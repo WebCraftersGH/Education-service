@@ -24,3 +24,9 @@ type ProgressResponseList struct {
 type ErrorResponse struct {
 	Error string `json:"error"`
 }
+
+type CreateProblemRequest struct {
+	Name       string `json:"name"`
+	Difficulty string `json:"difficulty"`
+	Tag        string `json:"tag"`
+}

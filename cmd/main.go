@@ -57,7 +57,7 @@ func main() {
 
 	authCl := authclient.New(cfg.AuthServiceURL, logger)
 
-	problemHandler := handlers.NewProblemHandler(problemUC)
+	problemHandler := handlers.NewProblemHandler(problemUC, logger)
 	problemContentHandler := handlers.NewProblemContentHandler(problemContentUC)
 	progressHandler := handlers.NewProgressHandler(pgSVC, logger)
 	docsHandler := docsHandlers.NewDocsHandler()
