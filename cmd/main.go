@@ -53,7 +53,7 @@ func main() {
 	problemContentUC := uc.NewProblemContentUseCase(problemContentRepo)
 
 	pgRepo := progressRepo.NewProgressRepo(db, logger)
-	pgSVC := progressSVC.NewCourseProgress(pgRepo)
+	pgSVC := progressSVC.NewCourseProgress(pgRepo, logger)
 
 	authCl := authclient.New(cfg.AuthServiceURL, logger)
 

@@ -8,29 +8,32 @@ import (
 	"github.com/WebCraftersGH/Education-service/internal/apperrors"
 	"github.com/WebCraftersGH/Education-service/internal/contracts/mocks"
 	"github.com/WebCraftersGH/Education-service/internal/domain"
+	"github.com/WebCraftersGH/Education-service/pkg/logging"
 	"github.com/google/uuid"
 	"go.uber.org/mock/gomock"
 )
-
 
 func TestSetProgress_Success(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
+	logger, closer, _ := logging.New("INFO")
+	defer closer.Close()
+
 	ctx := context.Background()
 	repo := mocks.NewMockProgressRepo(ctrl)
-	svc := NewCourseProgress(repo)
+	svc := NewCourseProgress(repo, logger)
 
 	userID := uuid.New()
 	inputSlug := "    New-slug     "
-	expectedSlug := "New-slug"	
+	expectedSlug := "New-slug"
 
 	repo.EXPECT().CreateCheckPoint(ctx, domain.CheckPoint{
 		UserID: userID,
-		Slug: expectedSlug,
+		Slug:   expectedSlug,
 	}).Return(domain.CheckPoint{
 		UserID: userID,
-		Slug: expectedSlug,
+		Slug:   expectedSlug,
 	}, nil).Times(1)
 
 	checkpoint, err := svc.SetProgress(ctx, userID, inputSlug)
@@ -39,7 +42,7 @@ func TestSetProgress_Success(t *testing.T) {
 	}
 
 	if checkpoint.Slug != expectedSlug {
-		t.Fatalf("got slug %s, want %s", checkpoint.Slug, expectedSlug)	
+		t.Fatalf("got slug %s, want %s", checkpoint.Slug, expectedSlug)
 	}
 }
 
@@ -47,18 +50,21 @@ func TestSetProgress_DuplicateRecord(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
+	logger, closer, _ := logging.New("INFO")
+	defer closer.Close()
+
 	ctx := context.Background()
 	repo := mocks.NewMockProgressRepo(ctrl)
-	svc := NewCourseProgress(repo)
+	svc := NewCourseProgress(repo, logger)
 
 	userID := uuid.New()
 	slug := "New-slug"
 
 	repo.EXPECT().CreateCheckPoint(ctx, domain.CheckPoint{
 		UserID: userID,
-		Slug: slug,
+		Slug:   slug,
 	}).Return(domain.CheckPoint{}, apperrors.ErrDuplicateRecord).
-	Times(1)
+		Times(1)
 
 	_, err := svc.SetProgress(ctx, userID, slug)
 	if err == nil {
@@ -66,7 +72,7 @@ func TestSetProgress_DuplicateRecord(t *testing.T) {
 	}
 
 	if !errors.Is(err, apperrors.ErrDuplicateRecord) {
-		t.Fatalf("expected ErrDuplicateRecord, got %v", err)	
+		t.Fatalf("expected ErrDuplicateRecord, got %v", err)
 	}
 }
 
@@ -74,9 +80,12 @@ func TestSetProgress_EmptySlug(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
+	logger, closer, _ := logging.New("INFO")
+	defer closer.Close()
+
 	ctx := context.Background()
 	repo := mocks.NewMockProgressRepo(ctrl)
-	svc := NewCourseProgress(repo)
+	svc := NewCourseProgress(repo, logger)
 
 	userID := uuid.New()
 	slug := "  "
@@ -95,9 +104,12 @@ func TestSetProgress_EmptyUserID(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
+	logger, closer, _ := logging.New("INFO")
+	defer closer.Close()
+
 	ctx := context.Background()
 	repo := mocks.NewMockProgressRepo(ctrl)
-	svc := NewCourseProgress(repo)
+	svc := NewCourseProgress(repo, logger)
 
 	userID := uuid.Nil
 	slug := "New-slug"
@@ -117,9 +129,12 @@ func TestSetProgress_InternalError(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
+	logger, closer, _ := logging.New("INFO")
+	defer closer.Close()
+
 	ctx := context.Background()
 	repo := mocks.NewMockProgressRepo(ctrl)
-	svc := NewCourseProgress(repo)
+	svc := NewCourseProgress(repo, logger)
 
 	userID := uuid.New()
 	slug := "New-slug"
@@ -145,9 +160,12 @@ func TestProgressList_Success(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
+	logger, closer, _ := logging.New("INFO")
+	defer closer.Close()
+
 	ctx := context.Background()
 	repo := mocks.NewMockProgressRepo(ctrl)
-	svc := NewCourseProgress(repo)
+	svc := NewCourseProgress(repo, logger)
 
 	userID := uuid.New()
 	expected := []domain.CheckPoint{
@@ -194,9 +212,12 @@ func TestProgressList_DefaultLimit(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
+	logger, closer, _ := logging.New("INFO")
+	defer closer.Close()
+
 	ctx := context.Background()
 	repo := mocks.NewMockProgressRepo(ctrl)
-	svc := NewCourseProgress(repo)
+	svc := NewCourseProgress(repo, logger)
 
 	userID := uuid.New()
 
@@ -215,9 +236,12 @@ func TestProgressList_MaxLimit(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
+	logger, closer, _ := logging.New("INFO")
+	defer closer.Close()
+
 	ctx := context.Background()
 	repo := mocks.NewMockProgressRepo(ctrl)
-	svc := NewCourseProgress(repo)
+	svc := NewCourseProgress(repo, logger)
 
 	userID := uuid.New()
 
@@ -236,9 +260,12 @@ func TestProgressList_NegativeOffset(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
+	logger, closer, _ := logging.New("INFO")
+	defer closer.Close()
+
 	ctx := context.Background()
 	repo := mocks.NewMockProgressRepo(ctrl)
-	svc := NewCourseProgress(repo)
+	svc := NewCourseProgress(repo, logger)
 
 	userID := uuid.New()
 
@@ -257,9 +284,12 @@ func TestProgressList_EmptyUserID(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
+	logger, closer, _ := logging.New("INFO")
+	defer closer.Close()
+
 	ctx := context.Background()
 	repo := mocks.NewMockProgressRepo(ctrl)
-	svc := NewCourseProgress(repo)
+	svc := NewCourseProgress(repo, logger)
 
 	_, err := svc.ProgressList(ctx, uuid.Nil, 10, 0)
 	if err == nil {
@@ -274,9 +304,12 @@ func TestProgressList_InternalError(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
+	logger, closer, _ := logging.New("INFO")
+	defer closer.Close()
+
 	ctx := context.Background()
 	repo := mocks.NewMockProgressRepo(ctrl)
-	svc := NewCourseProgress(repo)
+	svc := NewCourseProgress(repo, logger)
 
 	userID := uuid.New()
 
@@ -298,9 +331,12 @@ func TestProgressList_NegativeLimit(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
+	logger, closer, _ := logging.New("INFO")
+	defer closer.Close()
+
 	ctx := context.Background()
 	repo := mocks.NewMockProgressRepo(ctrl)
-	svc := NewCourseProgress(repo)
+	svc := NewCourseProgress(repo, logger)
 
 	userID := uuid.New()
 
@@ -319,9 +355,12 @@ func TestProgressList_PositiveOffset(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
+	logger, closer, _ := logging.New("INFO")
+	defer closer.Close()
+
 	ctx := context.Background()
 	repo := mocks.NewMockProgressRepo(ctrl)
-	svc := NewCourseProgress(repo)
+	svc := NewCourseProgress(repo, logger)
 
 	userID := uuid.New()
 
