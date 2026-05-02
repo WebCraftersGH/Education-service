@@ -40,7 +40,7 @@ func Load(envPath string) (Config, error) {
 		DBSSLMode:      getEnv("DB_SSLMODE", "disable"),
 		DBTimeZone:     getEnv("DB_TIMEZONE", "UTC"),
 		TokenCookie:    getEnv("TOKEN_COOKIE_NAME", "token"),
-		AuthServiceURL: getEnv("AUTH_SERVICE_URL", "localhost:8080/auth"),
+		AuthServiceURL: getEnv("AUTH_SERVICE_URL", "http://localhost:8080/api/v1"),
 	}
 
 	if err := cfg.Validate(); err != nil {

@@ -54,7 +54,7 @@ func main() {
 	pgRepo := progressRepo.NewProgressRepo(db, logger)
 	pgSVC := progressSVC.NewCourseProgress(pgRepo)
 
-	authCl := authclient.New(cfg.AuthServiceURL)
+	authCl := authclient.New(cfg.AuthServiceURL, logger)
 
 	problemHandler := handlers.NewProblemHandler(problemUC)
 	problemContentHandler := handlers.NewProblemContentHandler(problemContentUC)
