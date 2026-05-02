@@ -1,6 +1,7 @@
 package authclient
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -40,7 +41,14 @@ func New(baseURL string, logger logging.Logger) *Client {
 
 func (c *Client) Check(ctx context.Context, token string) (uuid.UUID, error) {
 	token = strings.TrimSpace(token)
-	c.logger.WithField("token", token).Info("check auth start")
+
+	// Логируем начало с частичным токеном (безопаснее)
+	tokenPreview := token
+	if len(token) > 20 {
+		tokenPreview = token[:20] + "..."
+	}
+	c.logger.WithField("token_preview", tokenPreview).Info("check auth start")
+
 	if token == "" {
 		return uuid.Nil, ErrUnauthorized
 	}
@@ -51,51 +59,102 @@ func (c *Client) Check(ctx context.Context, token string) (uuid.UUID, error) {
 		c.baseURL+"/auth/check",
 		nil,
 	)
-	c.logger.WithField("req", req).Info("request created")
 	if err != nil {
 		return uuid.Nil, fmt.Errorf("authclient: build request: %w", err)
 	}
 
 	req.Header.Set("Authorization", "Bearer "+token)
 
+	// Детальное логгирование запроса
+	c.logger.WithFields(map[string]interface{}{
+		"method":         req.Method,
+		"url":            req.URL.String(),
+		"headers":        req.Header,
+		"content_length": req.ContentLength,
+		"host":           req.Host,
+	}).Info("📤 sending request to auth service")
+
+	// Логируем curl-команду для тестирования
+	curlCmd := fmt.Sprintf("curl -X %s '%s' -H 'Authorization: Bearer %s'",
+		req.Method, req.URL.String(), tokenPreview)
+	c.logger.WithField("curl", curlCmd).Debug("equivalent curl command")
+
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
-		c.logger.WithError(err).Info("do request error")
+		c.logger.WithError(err).Error("❌ http request failed")
 		return uuid.Nil, fmt.Errorf("authclient: do request: %w", err)
 	}
 	defer resp.Body.Close()
 
+	// Читаем тело ответа
+	bodyBytes, err := io.ReadAll(resp.Body)
+	if err != nil {
+		c.logger.WithError(err).Error("read response body error")
+		return uuid.Nil, fmt.Errorf("authclient: read response: %w", err)
+	}
+
+	// Логируем ответ
+	c.logger.WithFields(map[string]interface{}{
+		"status_code":      resp.StatusCode,
+		"status_text":      http.StatusText(resp.StatusCode),
+		"response_body":    string(bodyBytes),
+		"response_headers": resp.Header,
+		"content_length":   len(bodyBytes),
+	}).Info("📥 received response from auth service")
+
+	// Восстанавливаем тело для декодирования
+	resp.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
+
+	// Если ответ пустой
+	if len(bodyBytes) == 0 {
+		c.logger.Warn("empty response body received")
+		if resp.StatusCode == http.StatusOK {
+			userID, err := c.extractUserIDFromToken(token)
+			if err != nil {
+				return uuid.Nil, fmt.Errorf("authclient: extract user_id: %w", err)
+			}
+			return userID, nil
+		}
+		return uuid.Nil, fmt.Errorf("authclient: empty response with status %d", resp.StatusCode)
+	}
+
 	var authResp AuthResponse
 	if err := json.NewDecoder(resp.Body).Decode(&authResp); err != nil {
-		c.logger.WithError(err).Error("decode response error")
+		c.logger.WithFields(map[string]interface{}{
+			"error":    err.Error(),
+			"raw_body": string(bodyBytes),
+		}).Error("❌ failed to decode JSON response")
 		return uuid.Nil, fmt.Errorf("authclient: decode response: %w", err)
 	}
 
-	c.logger.WithField("check_response", authResp).Info("get auth struct")
+	c.logger.WithField("check_response", authResp).Info("✅ decoded auth response")
 
 	switch resp.StatusCode {
 	case http.StatusOK:
-		// Если успешный ответ, просто парсим JWT и извлекаем uid (без верификации)
 		if authResp.Error != "" {
+			c.logger.WithField("error_msg", authResp.Error).Warn("auth error in successful response")
 			return uuid.Nil, ErrUnauthorized
 		}
 
 		userID, err := c.extractUserIDFromToken(token)
 		if err != nil {
+			c.logger.WithError(err).Error("failed to extract user ID from token")
 			return uuid.Nil, fmt.Errorf("authclient: extract user_id from token: %w", err)
 		}
 
+		c.logger.WithField("user_id", userID).Info("✅ authentication successful")
 		return userID, nil
 
 	case http.StatusUnauthorized, http.StatusForbidden:
+		c.logger.Warn("authentication failed - unauthorized")
 		return uuid.Nil, ErrUnauthorized
 
 	default:
-		body, _ := io.ReadAll(io.LimitReader(resp.Body, 4096))
+		c.logger.WithField("status", resp.StatusCode).Error("unexpected status code")
 		return uuid.Nil, fmt.Errorf(
 			"authclient: unexpected status=%d body=%s",
 			resp.StatusCode,
-			strings.TrimSpace(string(body)),
+			strings.TrimSpace(string(bodyBytes)),
 		)
 	}
 }
