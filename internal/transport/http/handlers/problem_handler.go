@@ -4,6 +4,7 @@ import (
 	"errors"
 	"github.com/WebCraftersGH/Education-service/internal/contracts"
 	"github.com/WebCraftersGH/Education-service/internal/domain"
+	"github.com/WebCraftersGH/Education-service/internal/requestctx"
 	"github.com/WebCraftersGH/Education-service/internal/slugify"
 	"github.com/WebCraftersGH/Education-service/pkg/logging"
 	"net/http"
@@ -22,6 +23,12 @@ func NewProblemHandler(
 }
 
 func (h *ProblemHandler) Create(w http.ResponseWriter, r *http.Request) {
+	userID, ok := requestctx.UserID(r.Context())
+	if !ok {
+		writeError(w, http.StatusUnauthorized, "unauthorized")
+		return
+	}
+
 	var createProblemRequest CreateProblemRequest
 	if err := decodeJSON(r, &createProblemRequest); err != nil {
 		h.logger.WithError(err).Info("invalid request body")
@@ -35,6 +42,7 @@ func (h *ProblemHandler) Create(w http.ResponseWriter, r *http.Request) {
 		Tag:        createProblemRequest.Tag,
 		Slug:       slugify.Slugify(createProblemRequest.Name),
 		Status:     domain.ProblemStatusDraft,
+		AuthorID:   userID,
 	}
 
 	created, err := h.usecase.Create(r.Context(), domainProblem)
@@ -48,6 +56,9 @@ func (h *ProblemHandler) Create(w http.ResponseWriter, r *http.Request) {
 			return
 		case errors.Is(err, domain.ErrProblemDifficultyRequired):
 			writeError(w, http.StatusBadRequest, domain.ErrProblemDifficultyRequired.Error())
+			return
+		case errors.Is(err, domain.ErrProblemAuthorIDRequired):
+			writeError(w, http.StatusUnauthorized, "unauthorized")
 			return
 		default:
 			h.logger.WithError(err).Error("create problem error")
