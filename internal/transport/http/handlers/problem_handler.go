@@ -18,7 +18,7 @@ func NewProblemHandler(
 	usecase contracts.ProblemSVC,
 	logger logging.Logger,
 ) *ProblemHandler {
-	return &ProblemHandler{usecase: usecase}
+	return &ProblemHandler{usecase: usecase, logger: logger}
 }
 
 func (h *ProblemHandler) Create(w http.ResponseWriter, r *http.Request) {
