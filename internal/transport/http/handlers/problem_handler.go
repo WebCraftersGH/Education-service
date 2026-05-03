@@ -4,6 +4,7 @@ import (
 	"errors"
 	"github.com/WebCraftersGH/Education-service/internal/contracts"
 	"github.com/WebCraftersGH/Education-service/internal/domain"
+	"github.com/WebCraftersGH/Education-service/internal/slugify"
 	"github.com/WebCraftersGH/Education-service/pkg/logging"
 	"net/http"
 )
@@ -32,6 +33,7 @@ func (h *ProblemHandler) Create(w http.ResponseWriter, r *http.Request) {
 		Name:       createProblemRequest.Name,
 		Difficulty: createProblemRequest.Difficulty,
 		Tag:        createProblemRequest.Tag,
+		Slug:       slugify.Slugify(createProblemRequest.Name),
 		Status:     domain.ProblemStatusDraft,
 	}
 
