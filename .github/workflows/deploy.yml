@@ -41,7 +41,7 @@ jobs:
             echo "${{ secrets.GHCR_PAT }}" | docker login ghcr.io -u webcraftersgh --password-stdin
 
             cd /opt/LearnFlow-launcher
-            docker compose pull edu-service
-            docker compose up -d --no-deps edu-service
+            docker compose pull education-service
+            docker compose up -d --no-deps education-service
             docker image prune -f
 
