@@ -8,6 +8,7 @@ import (
 	"github.com/WebCraftersGH/Education-service/internal/middleware"
 	swaggerdocs "github.com/WebCraftersGH/Education-service/internal/transport/http/docs"
 	httphandlers "github.com/WebCraftersGH/Education-service/internal/transport/http/handlers"
+	"github.com/WebCraftersGH/Education-service/pkg/logging"
 )
 
 func NewRouter(
@@ -17,12 +18,14 @@ func NewRouter(
 	healthHandler *httphandlers.HealthHandler,
 	docsHandler *swaggerdocs.DocsHandler,
 	authChecker middleware.AuthChecker,
+	logger logging.Logger,
 	debugMode bool,
 ) *mux.Router {
 	router := mux.NewRouter().StrictSlash(true)
 
 	//request-id-middleware
 	router.Use(middleware.GenerateRequestID)
+	router.Use(middleware.RequestLogger(logger))
 
 	if debugMode {
 		// DocsHandlers

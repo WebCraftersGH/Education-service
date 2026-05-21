@@ -32,7 +32,7 @@ func Load(envPath string) (Config, error) {
 	cfg := Config{
 		AppEnv:         getEnv("APP_ENV", "local"),
 		HTTPPort:       getEnv("HTTP_PORT", "8080"),
-		LogLevel:       getEnv("LOG_LEVEL", "info"),
+		LogLevel:       getEnv("LOG_LEVEL", "debug"),
 		DBHost:         getEnv("DB_HOST", "localhost"),
 		DBPort:         getEnv("DB_PORT", "5432"),
 		DBUser:         getEnv("DB_USER", "eduuser"),

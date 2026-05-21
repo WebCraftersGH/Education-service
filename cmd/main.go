@@ -34,12 +34,13 @@ func main() {
 	defer closer.Close()
 
 	logger.WithFields(map[string]any{
-		"app_env":     cfg.AppEnv,
-		"http_port":   cfg.HTTPPort,
-		"db_host":     cfg.DBHost,
-		"db_port":     cfg.DBPort,
-		"db_name":     cfg.DBName,
-		"db_password": cfg.DBPass,
+		"app_env":    cfg.AppEnv,
+		"http_port":  cfg.HTTPPort,
+		"db_host":    cfg.DBHost,
+		"db_port":    cfg.DBPort,
+		"db_name":    cfg.DBName,
+		"log_level":  cfg.LogLevel,
+		"debug_mode": cfg.DEBUG_MODE,
 	}).Info("config loaded")
 
 	db, err := database.NewPostgres(cfg)
@@ -70,6 +71,7 @@ func main() {
 		healthHandler,
 		docsHandler,
 		authCl,
+		logger,
 		cfg.DEBUG_MODE,
 	)
 

@@ -49,7 +49,7 @@ func New(level string) (Logger, io.Closer, error) {
 func parseLevel(level string) logrus.Level {
 	parsed, err := logrus.ParseLevel(strings.ToLower(strings.TrimSpace(level)))
 	if err != nil {
-		return logrus.InfoLevel
+		return logrus.DebugLevel
 	}
 	return parsed
 }
