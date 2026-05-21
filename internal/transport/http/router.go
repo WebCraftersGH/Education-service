@@ -45,6 +45,7 @@ func NewRouter(
 
 	// ProblemHandlers
 	api.HandleFunc("/problems", problemHandler.Create).Methods(http.MethodPost)
+	api.HandleFunc("/problems/", problemHandler.Create).Methods(http.MethodPost)
 	api.HandleFunc("/problems", problemHandler.List).Methods(http.MethodGet)
 	api.HandleFunc("/problems/{problemID}", problemHandler.ReadByID).Methods(http.MethodGet)
 	api.HandleFunc("/problems/{slug}", problemHandler.Update).Methods(http.MethodPut)

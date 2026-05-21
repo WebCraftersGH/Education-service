@@ -38,6 +38,15 @@ func toProblemResponse(problem domain.Problem) ProblemResponse {
 	}
 }
 
+func toProblemResponseList(problems []domain.Problem) ProblemResponseList {
+	list := make([]ProblemResponse, len(problems))
+	for i, problem := range problems {
+		list[i] = toProblemResponse(problem)
+	}
+
+	return ProblemResponseList{Problems: list}
+}
+
 func toProblemContentResponse(problemContent domain.ProblemContent) ProblemContentResponse {
 	return ProblemContentResponse{
 		ID:            problemContent.ID,

@@ -45,6 +45,10 @@ type ProblemResponse struct {
 	UpdatedAt  time.Time  `json:"updated_at"`
 }
 
+type ProblemResponseList struct {
+	Problems []ProblemResponse `json:"problems"`
+}
+
 type CreateProblemContentRequest struct {
 	ActualGraph   json.RawMessage `json:"actual_graph"`
 	ExpectedGraph json.RawMessage `json:"expected_graph"`

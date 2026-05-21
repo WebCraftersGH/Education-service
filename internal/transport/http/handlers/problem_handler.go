@@ -99,7 +99,24 @@ func (h *ProblemHandler) ReadByID(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, toProblemResponse(problem))
 }
 
-func (h *ProblemHandler) List(w http.ResponseWriter, r *http.Request) {}
+func (h *ProblemHandler) List(w http.ResponseWriter, r *http.Request) {
+	query := r.URL.Query()
+	filter := domain.ProblemFilter{
+		Tag:        query.Get("tag"),
+		Difficulty: query.Get("difficulty"),
+		Limit:      parseIntQuery(query.Get("limit"), 20),
+		Offset:     parseIntQuery(query.Get("offset"), 0),
+	}
+
+	problems, err := h.usecase.List(r.Context(), filter)
+	if err != nil {
+		h.logger.WithError(err).Error("list problems error")
+		writeError(w, http.StatusInternalServerError, "internal error")
+		return
+	}
+
+	writeJSON(w, http.StatusOK, toProblemResponseList(problems))
+}
 
 func (h *ProblemHandler) Update(w http.ResponseWriter, r *http.Request) {}
 
