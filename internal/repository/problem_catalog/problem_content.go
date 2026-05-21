@@ -10,7 +10,7 @@ import (
 )
 
 type RepositoryProblemContent struct {
-	db *gorm.DB
+	db     *gorm.DB
 	logger logging.Logger
 }
 
@@ -72,11 +72,9 @@ func (r *RepositoryProblemContent) Update(ctx context.Context, pc domain.Problem
 		Model(&ProblemContent{}).
 		Where("problem_id = ?", pc.ProblemID).
 		Updates(map[string]any{
-			"description_md":   model.DescriptionMD,
-			"input_format_md":  model.InputFormatMD,
-			"output_format_md": model.OutputFormatMD,
-			"constraints_md":   model.ConstraintsMD,
-			"notes_md":         model.NotesMD,
+			"actual_graph":   model.ActualGraph,
+			"expected_graph": model.ExpectedGraph,
+			"full_text":      model.FullText,
 		})
 
 	if tx.Error != nil {

@@ -1,6 +1,7 @@
 package domain
 
 import (
+	"encoding/json"
 	"github.com/google/uuid"
 	"time"
 )
@@ -36,15 +37,14 @@ type Problem struct {
 }
 
 type ProblemContent struct {
-	ID             uuid.UUID
-	ProblemID      uuid.UUID
-	DescriptionMD  string
-	InputFormatMD  string
-	OutputFormatMD string
-	ConstraintsMD  string
-	NotesMD        string
-	CreatedAt      time.Time
-	UpdatedAt      time.Time
+	ID            uuid.UUID
+	ProblemID     uuid.UUID
+	AuthorID      uuid.UUID
+	ActualGraph   json.RawMessage
+	ExpectedGraph json.RawMessage
+	FullText      string
+	CreatedAt     time.Time
+	UpdatedAt     time.Time
 }
 
 type ProblemFilter struct {

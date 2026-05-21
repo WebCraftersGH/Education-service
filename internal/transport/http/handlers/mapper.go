@@ -22,3 +22,31 @@ func toProgressResponseList(checkpoints []domain.CheckPoint) ProgressResponseLis
 	}
 	return ProgressResponseList{ProgressList: list}
 }
+
+func toProblemResponse(problem domain.Problem) ProblemResponse {
+	return ProblemResponse{
+		ID:         problem.ID,
+		Name:       problem.Name,
+		Slug:       problem.Slug,
+		Difficulty: problem.Difficulty,
+		Tag:        problem.Tag,
+		Status:     string(problem.Status),
+		AuthorID:   problem.AuthorID,
+		VerifiedAt: problem.VerifiedAt,
+		CreatedAt:  problem.CreatedAt,
+		UpdatedAt:  problem.UpdatedAt,
+	}
+}
+
+func toProblemContentResponse(problemContent domain.ProblemContent) ProblemContentResponse {
+	return ProblemContentResponse{
+		ID:            problemContent.ID,
+		ProblemID:     problemContent.ProblemID,
+		AuthorID:      problemContent.AuthorID,
+		ActualGraph:   problemContent.ActualGraph,
+		ExpectedGraph: problemContent.ExpectedGraph,
+		FullText:      problemContent.FullText,
+		CreatedAt:     problemContent.CreatedAt,
+		UpdatedAt:     problemContent.UpdatedAt,
+	}
+}

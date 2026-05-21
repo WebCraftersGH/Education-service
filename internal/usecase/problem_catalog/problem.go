@@ -55,6 +55,14 @@ func (uc *ProblemUseCase) ReadBySlug(ctx context.Context, pSlug string) (domain.
 	return uc.repo.ReadBySlug(ctx, pSlug)
 }
 
+func (uc *ProblemUseCase) ReadByID(ctx context.Context, problemID uuid.UUID) (domain.Problem, error) {
+	if problemID == uuid.Nil {
+		return domain.Problem{}, domain.ErrProblemIDRequired
+	}
+
+	return uc.repo.ReadByID(ctx, problemID)
+}
+
 func (uc *ProblemUseCase) Update(ctx context.Context, p domain.Problem) (domain.Problem, error) {
 	if p.ID == uuid.Nil {
 		return domain.Problem{}, domain.ErrProblemIDRequired

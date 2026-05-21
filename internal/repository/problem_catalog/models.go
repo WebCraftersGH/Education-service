@@ -1,10 +1,41 @@
 package problemcatalog
 
 import (
+	"database/sql/driver"
+	"encoding/json"
+	"errors"
+
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 	"time"
 )
+
+type JSONB json.RawMessage
+
+func (j JSONB) Value() (driver.Value, error) {
+	if len(j) == 0 {
+		return nil, nil
+	}
+	return string(j), nil
+}
+
+func (j *JSONB) Scan(value any) error {
+	if value == nil {
+		*j = nil
+		return nil
+	}
+
+	switch v := value.(type) {
+	case []byte:
+		*j = append((*j)[0:0], v...)
+	case string:
+		*j = append((*j)[0:0], v...)
+	default:
+		return errors.New("invalid jsonb value")
+	}
+
+	return nil
+}
 
 type Problem struct {
 	ID uuid.UUID `gorm:"type:uuid;primaryKey"`
@@ -34,16 +65,15 @@ func (p *Problem) BeforeCreate(_ *gorm.DB) error {
 }
 
 type ProblemContent struct {
-	ID             uuid.UUID `gorm:"type:uuid;primaryKey"`
-	ProblemID      uuid.UUID `gorm:"type:uuid;not null;uniqueIndex"`
-	DescriptionMD  string    `gorm:"type:text;not null"`
-	InputFormatMD  string    `gorm:"type:text"`
-	OutputFormatMD string    `gorm:"type:text"`
-	ConstraintsMD  string    `gorm:"type:text"`
-	NotesMD        string    `gorm:"type:text"`
-	CreatedAt      time.Time `gorm:"not null;autoCreateTime"`
-	UpdatedAt      time.Time `gorm:"not null;autoUpdateTime"`
-	Problem        Problem   `gorm:"foreignKey:ProblemID;references:ID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;" json:"-"`
+	ID            uuid.UUID `gorm:"type:uuid;primaryKey"`
+	ProblemID     uuid.UUID `gorm:"type:uuid;not null;uniqueIndex"`
+	AuthorID      uuid.UUID `gorm:"type:uuid;not null;index"`
+	ActualGraph   JSONB     `gorm:"type:jsonb;not null"`
+	ExpectedGraph JSONB     `gorm:"type:jsonb;not null"`
+	FullText      string    `gorm:"type:text;not null"`
+	CreatedAt     time.Time `gorm:"not null;autoCreateTime"`
+	UpdatedAt     time.Time `gorm:"not null;autoUpdateTime"`
+	Problem       Problem   `gorm:"foreignKey:ProblemID;references:ID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;" json:"-"`
 }
 
 func (ProblemContent) TableName() string {

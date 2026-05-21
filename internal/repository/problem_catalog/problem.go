@@ -13,7 +13,7 @@ import (
 )
 
 type Repository struct {
-	db *gorm.DB
+	db     *gorm.DB
 	logger logging.Logger
 }
 
@@ -56,7 +56,7 @@ func (r *Repository) ReadBySlug(ctx context.Context, pSlug string) (domain.Probl
 	return ToProblemDomain(model), nil
 }
 
-func (r *Repository) Read(ctx context.Context, problemID uuid.UUID) (domain.Problem, error) {
+func (r *Repository) ReadByID(ctx context.Context, problemID uuid.UUID) (domain.Problem, error) {
 	var model Problem
 
 	if err := r.db.WithContext(ctx).

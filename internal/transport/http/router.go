@@ -46,8 +46,16 @@ func NewRouter(
 	// ProblemHandlers
 	api.HandleFunc("/problems", problemHandler.Create).Methods(http.MethodPost)
 	api.HandleFunc("/problems", problemHandler.List).Methods(http.MethodGet)
+	api.HandleFunc("/problems/{problemID}", problemHandler.ReadByID).Methods(http.MethodGet)
 	api.HandleFunc("/problems/{slug}", problemHandler.Update).Methods(http.MethodPut)
 	api.HandleFunc("/problems/{slug}", problemHandler.Delete).Methods(http.MethodDelete)
+
+	// ProblemContentHandlers
+	api.HandleFunc("/problems/{problemID}/content", problemContentHandler.Create).Methods(http.MethodPost)
+	api.HandleFunc("/problems/{problemID}/content", problemContentHandler.ReadByProblemID).Methods(http.MethodGet)
+	api.HandleFunc("/problems/{problemID}/content", problemContentHandler.Update).Methods(http.MethodPut)
+	api.HandleFunc("/problems/{problemID}/content", problemContentHandler.DeleteByProblemID).Methods(http.MethodDelete)
+	api.HandleFunc("/problems/{problemID}/content/solve", problemContentHandler.Solve).Methods(http.MethodPost)
 
 	//Health
 	api.HandleFunc("/health", healthHandler.Health).Methods(http.MethodGet)

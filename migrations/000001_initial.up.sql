@@ -23,11 +23,10 @@ CREATE INDEX IF NOT EXISTS idx_problems_created_at ON problems (created_at DESC)
 CREATE TABLE IF NOT EXISTS problem_contents (
     id uuid PRIMARY KEY,
     problem_id uuid NOT NULL,
-    description_md text NOT NULL,
-    input_format_md text,
-    output_format_md text,
-    constraints_md text,
-    notes_md text,
+    author_id uuid NOT NULL,
+    actual_graph jsonb NOT NULL,
+    expected_graph jsonb NOT NULL,
+    full_text text NOT NULL,
     created_at timestamptz NOT NULL DEFAULT NOW(),
     updated_at timestamptz NOT NULL DEFAULT NOW(),
     CONSTRAINT uni_problem_contents_problem_id UNIQUE (problem_id),  -- добавляем UNIQUE constraint
@@ -39,4 +38,4 @@ CREATE TABLE IF NOT EXISTS problem_contents (
 );
 
 CREATE INDEX IF NOT EXISTS idx_problem_contents_problem_id ON problem_contents (problem_id);
-
+CREATE INDEX IF NOT EXISTS idx_problem_contents_author_id ON problem_contents (author_id);

@@ -2,12 +2,16 @@ package handlers
 
 import (
 	"errors"
+	"net/http"
+
 	"github.com/WebCraftersGH/Education-service/internal/contracts"
 	"github.com/WebCraftersGH/Education-service/internal/domain"
 	"github.com/WebCraftersGH/Education-service/internal/requestctx"
 	"github.com/WebCraftersGH/Education-service/internal/slugify"
 	"github.com/WebCraftersGH/Education-service/pkg/logging"
-	"net/http"
+	"github.com/google/uuid"
+	"github.com/gorilla/mux"
+	"gorm.io/gorm"
 )
 
 type ProblemHandler struct {
@@ -67,7 +71,32 @@ func (h *ProblemHandler) Create(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	writeJSON(w, http.StatusCreated, created)
+	writeJSON(w, http.StatusCreated, toProblemResponse(created))
+}
+
+func (h *ProblemHandler) ReadByID(w http.ResponseWriter, r *http.Request) {
+	rawProblemID := mux.Vars(r)["problemID"]
+	problemID, err := uuid.Parse(rawProblemID)
+	if err != nil {
+		writeError(w, http.StatusBadRequest, "invalid problem id")
+		return
+	}
+
+	problem, err := h.usecase.ReadByID(r.Context(), problemID)
+	if err != nil {
+		switch {
+		case errors.Is(err, domain.ErrProblemIDRequired):
+			writeError(w, http.StatusBadRequest, domain.ErrProblemIDRequired.Error())
+		case errors.Is(err, gorm.ErrRecordNotFound):
+			writeError(w, http.StatusNotFound, "problem not found")
+		default:
+			h.logger.WithError(err).Error("read problem by id error")
+			writeError(w, http.StatusInternalServerError, "internal error")
+		}
+		return
+	}
+
+	writeJSON(w, http.StatusOK, toProblemResponse(problem))
 }
 
 func (h *ProblemHandler) List(w http.ResponseWriter, r *http.Request) {}

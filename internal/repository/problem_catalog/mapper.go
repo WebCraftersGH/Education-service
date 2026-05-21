@@ -49,28 +49,34 @@ func ToProblemDomains(problems []Problem) []domain.Problem {
 
 func ToProblemContentModel(pc domain.ProblemContent) ProblemContent {
 	return ProblemContent{
-		ID:             pc.ID,
-		ProblemID:      pc.ProblemID,
-		DescriptionMD:  pc.DescriptionMD,
-		InputFormatMD:  pc.InputFormatMD,
-		OutputFormatMD: pc.OutputFormatMD,
-		ConstraintsMD:  pc.ConstraintsMD,
-		NotesMD:        pc.NotesMD,
-		CreatedAt:      pc.CreatedAt,
-		UpdatedAt:      pc.UpdatedAt,
+		ID:            pc.ID,
+		ProblemID:     pc.ProblemID,
+		AuthorID:      pc.AuthorID,
+		ActualGraph:   JSONB(pc.ActualGraph),
+		ExpectedGraph: JSONB(pc.ExpectedGraph),
+		FullText:      pc.FullText,
+		CreatedAt:     pc.CreatedAt,
+		UpdatedAt:     pc.UpdatedAt,
 	}
 }
 
 func ToProblemContentDomain(pc ProblemContent) domain.ProblemContent {
 	return domain.ProblemContent{
-		ID:             pc.ID,
-		ProblemID:      pc.ProblemID,
-		DescriptionMD:  pc.DescriptionMD,
-		InputFormatMD:  pc.InputFormatMD,
-		OutputFormatMD: pc.OutputFormatMD,
-		ConstraintsMD:  pc.ConstraintsMD,
-		NotesMD:        pc.NotesMD,
-		CreatedAt:      pc.CreatedAt,
-		UpdatedAt:      pc.UpdatedAt,
+		ID:            pc.ID,
+		ProblemID:     pc.ProblemID,
+		AuthorID:      pc.AuthorID,
+		ActualGraph:   domainJSON(pc.ActualGraph),
+		ExpectedGraph: domainJSON(pc.ExpectedGraph),
+		FullText:      pc.FullText,
+		CreatedAt:     pc.CreatedAt,
+		UpdatedAt:     pc.UpdatedAt,
 	}
+}
+
+func domainJSON(j JSONB) []byte {
+	if len(j) == 0 {
+		return nil
+	}
+
+	return append([]byte(nil), j...)
 }
